@@ -714,7 +714,8 @@ function showToast(msg, duration = 3000) {
 // ═══════════════════════════════════════════════════════════════
 function renderSetup() {
   const list = document.getElementById('player-list');
-  list.innerHTML = state.players.map(p => {
+  const sorted = [...state.players].sort((a, b) => a.name.localeCompare(b.name));
+  list.innerHTML = sorted.map(p => {
     if (p.isKeeper) {
       return `
         <div class="player-row">
