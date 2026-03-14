@@ -169,6 +169,20 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .mh-badge.home { color: var(--green); border-color: var(--green-bd); background: var(--green-bg); }
 
+.mh-score {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
+}
+.mh-score-num {
+  font-size: 1.5rem; font-weight: 900; line-height: 1;
+  min-width: 24px; text-align: center;
+}
+.mh-score-sep { font-size: 1.1rem; color: var(--muted); }
+.mh-score-team { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.mh-score-win  .mh-score-num { color: var(--green); }
+.mh-score-loss .mh-score-num { color: var(--red); }
+.mh-score-draw .mh-score-num { color: var(--yellow); }
+.mh-score-open .mh-score-num { color: var(--muted); }
+
 .play-match-btn {
   display: block; width: 100%; margin-top: 10px; padding: 9px;
   background: var(--green); color: #fff; border: none; border-radius: 8px;
@@ -379,6 +393,7 @@ input[type="range"]::-webkit-slider-thumb {
       <div class="card-title">Totale speeltijd</div>
       <div class="pt-grid" id="pt-grid"><!-- JS --></div>
     </div>
+    <button class="btn btn-blue btn-sm" id="add-match-btn" onclick="addExtraMatch()" style="margin-top:4px;">+ Extra wedstrijd toevoegen</button>
     <button class="btn btn-gray btn-sm" onclick="showView('view-setup')">← Terug naar setup</button>
   </div>
 
@@ -485,6 +500,7 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="btn btn-blue" id="timer-toggle-btn" onclick="toggleTimer()" style="margin:0;flex:1;">▶ Start</button>
         <button class="btn btn-gray" onclick="resetTimerUI()" style="margin:0;width:auto;padding:14px 16px;">↺</button>
       </div>
+      <button class="btn btn-gray btn-sm" onclick="endMatchEarly()" style="margin-top:8px;">■ Wedstrijd beëindigen</button>
     </div>
 
     <!-- Bank -->
@@ -494,7 +510,7 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 
     <button class="btn btn-green" id="action-btn" onclick="onActionBtn()">Wissel doorvoeren ↔</button>
-    <button class="btn btn-gray btn-sm" onclick="showView('view-schema')" style="margin-top:8px;">← Terug naar schema</button>
+    <button class="btn btn-gray btn-sm" onclick="showSchemaView()" style="margin-top:8px;">← Terug naar schema</button>
   </div>
 
 </div><!-- /.app -->
@@ -810,44 +826,59 @@ function assignPositions(players) {
 }
 
 function generateSchedule() {
-  const field    = state.players.filter(p => !p.isKeeper);
-  const n        = field.length;   // 7
-  const bench    = n - 5;          // 2
-  const numSlots = state.numMatches * 2;
+  const field      = state.players.filter(p => !p.isKeeper);
+  const n          = field.length;              // 7
+  const benchPerSlot = n - 5;                   // 2
+  const numSlots   = state.numMatches * 2;
+  const totalBench = numSlots * benchPerSlot;   // 12 bij 3 wedstrijden
 
-  const totalBench = numSlots * bench;
-  const baseQ  = Math.floor(totalBench / n);
-  const extra  = totalBench % n;
+  // Iedereen krijgt een gelijke max-bankbeurt: ceil(12/7) = 2
+  // Hierdoor bepaalt NIET de rating wie meer speelt, maar de roostervolgorde
+  const maxBench = Math.ceil(totalBench / n);
+  const benchCount = {};
+  field.forEach(p => benchCount[p.name] = 0);
 
-  const sorted = [...field].sort((a, b) => b.rating - a.rating);
-  const quota  = {};
-  sorted.forEach((p, i) => { quota[p.name] = i < (n - extra) ? baseQ : baseQ + 1; });
-
-  const used = {};
-  field.forEach(p => used[p.name] = 0);
-
-  const slots     = [];
-  let prevBench   = [];
+  const slots    = [];
+  let prevBench  = [];
 
   for (let s = 0; s < numSlots; s++) {
-    let cands = field
-      .filter(p => used[p.name] < quota[p.name] && !prevBench.includes(p.name))
-      .sort((a, b) => a.rating - b.rating);
+    // Speelcount tot nu toe per speler
+    const playedSoFar = {};
+    field.forEach(p => playedSoFar[p.name] = s - benchCount[p.name]);
 
-    let bankSpelers = cands.slice(0, bench);
+    // Kandidaten: bankquotum niet vol, niet twee keer achter elkaar op bank
+    let cands = field.filter(p =>
+      benchCount[p.name] < maxBench && !prevBench.includes(p.name)
+    );
 
-    if (bankSpelers.length < bench) {
+    // Sorteer: meest gespeeld gaat eerst op bank (gelijke speeltijd)
+    // Bij gelijke speelstand: lager beoordeelde gaat eerder op bank (als tiebreaker)
+    cands.sort((a, b) => {
+      const playDiff = playedSoFar[b.name] - playedSoFar[a.name];
+      if (playDiff !== 0) return playDiff;
+      return a.rating - b.rating;
+    });
+
+    let bankSpelers = cands.slice(0, benchPerSlot);
+
+    // Fallback: verbreek consecutief-beperking als geen andere keuze
+    if (bankSpelers.length < benchPerSlot) {
       const al = bankSpelers.map(p => p.name);
-      const extra2 = field
-        .filter(p => used[p.name] < quota[p.name] && !al.includes(p.name))
-        .sort((a, b) => a.rating - b.rating)
-        .slice(0, bench - bankSpelers.length);
-      bankSpelers = [...bankSpelers, ...extra2];
+      const fallback = field
+        .filter(p => benchCount[p.name] < maxBench && !al.includes(p.name))
+        .sort((a, b) => {
+          const pd = playedSoFar[b.name] - playedSoFar[a.name];
+          return pd !== 0 ? pd : a.rating - b.rating;
+        })
+        .slice(0, benchPerSlot - bankSpelers.length);
+      bankSpelers = [...bankSpelers, ...fallback];
     }
 
-    bankSpelers.forEach(p => used[p.name]++);
+    bankSpelers.forEach(p => benchCount[p.name]++);
     const bankNamen = bankSpelers.map(p => p.name);
-    const velders   = field.filter(p => !bankNamen.includes(p.name)).sort((a, b) => b.rating - a.rating);
+    const velders   = field
+      .filter(p => !bankNamen.includes(p.name))
+      .sort((a, b) => b.rating - a.rating);
 
     slots.push({ ...assignPositions(velders), bench: bankNamen });
     prevBench = bankNamen;
@@ -882,6 +913,7 @@ function renderSchema() {
           <span class="mh-badge">🕐 ${info.tijd}</span>
           <span class="mh-badge">📍 ${info.veld}</span>
         </div>
+        ${renderSchemaScore(m)}
         <button class="play-match-btn" onclick="startMatch(${m})">▶ Speel deze wedstrijd</button>
       </div>`;
 
@@ -932,6 +964,29 @@ function renderSchema() {
   renderPlaytime();
 }
 
+function renderSchemaScore(m) {
+  const sc = state.scores && state.scores[m];
+  if (!sc) return '';
+  const { ours, them } = sc;
+  // Bepaal klasse op basis van uitslag (vanuit ons perspectief)
+  let cls = 'mh-score-open';
+  if (ours > them)       cls = 'mh-score-win';
+  else if (ours < them)  cls = 'mh-score-loss';
+  else if (ours === them && (ours > 0 || state.currentMatch > m)) cls = 'mh-score-draw';
+  return `
+    <div class="mh-score ${cls}">
+      <span class="mh-score-team">Uitslag:</span>
+      <span class="mh-score-num">${ours}</span>
+      <span class="mh-score-sep">–</span>
+      <span class="mh-score-num">${them}</span>
+    </div>`;
+}
+
+function showSchemaView() {
+  if (state.schedule) renderSchema();
+  showView('view-schema');
+}
+
 function renderPlaytime() {
   const field = state.players.filter(p => !p.isKeeper);
   const playCounts = {};
@@ -951,13 +1006,80 @@ function renderPlaytime() {
     }).join('');
 }
 
+function addExtraMatch() {
+  const field        = state.players.filter(p => !p.isKeeper);
+  const n            = field.length;
+  const benchPerSlot = n - 5;
+
+  // Tel bestaande bankbeurten per speler
+  const benchCount = {};
+  field.forEach(p => benchCount[p.name] = 0);
+  state.schedule.forEach(slot => {
+    (slot.bench || []).forEach(name => benchCount[name]++);
+  });
+
+  // Nieuw max op basis van totaal inclusief de 2 nieuwe slots
+  const totalSlots = state.schedule.length + 2;
+  const maxBench   = Math.ceil((totalSlots * benchPerSlot) / n);
+
+  // Laatste bank (voor consecutieve beperking)
+  let prevBench = state.schedule.length > 0
+    ? (state.schedule[state.schedule.length - 1].bench || [])
+    : [];
+
+  const slots = [];
+
+  for (let s = 0; s < 2; s++) {
+    const soFar = state.schedule.length + s;
+    const playedSoFar = {};
+    field.forEach(p => playedSoFar[p.name] = soFar - benchCount[p.name]);
+
+    let cands = field.filter(p =>
+      benchCount[p.name] < maxBench && !prevBench.includes(p.name)
+    );
+    cands.sort((a, b) => {
+      const d = playedSoFar[b.name] - playedSoFar[a.name];
+      return d !== 0 ? d : a.rating - b.rating;
+    });
+
+    let bankSpelers = cands.slice(0, benchPerSlot);
+    if (bankSpelers.length < benchPerSlot) {
+      const al = bankSpelers.map(p => p.name);
+      const extra = field
+        .filter(p => benchCount[p.name] < maxBench && !al.includes(p.name))
+        .sort((a, b) => {
+          const d = playedSoFar[b.name] - playedSoFar[a.name];
+          return d !== 0 ? d : a.rating - b.rating;
+        })
+        .slice(0, benchPerSlot - bankSpelers.length);
+      bankSpelers = [...bankSpelers, ...extra];
+    }
+
+    bankSpelers.forEach(p => benchCount[p.name]++);
+    const bankNamen = bankSpelers.map(p => p.name);
+    const velders   = field
+      .filter(p => !bankNamen.includes(p.name))
+      .sort((a, b) => b.rating - a.rating);
+
+    slots.push({ ...assignPositions(velders), bench: bankNamen });
+    prevBench = bankNamen;
+  }
+
+  state.numMatches++;
+  state.scores.push({ ours: 0, them: 0 });
+  state.schedule.push(...slots);
+  saveState();
+  renderSchema();
+  showToast(`Wedstrijd ${state.numMatches} toegevoegd!`);
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MATCH VIEW
 // ═══════════════════════════════════════════════════════════════
 function startMatch(matchIndex) {
   state.currentMatch = matchIndex;
   state.currentHalf  = 0;
-  state.scores[matchIndex] = { ours:0, them:0 };
+  if (!state.scores[matchIndex]) state.scores[matchIndex] = { ours:0, them:0 };
   saveState();
   renderMatch();
   showView('view-match');
@@ -1082,10 +1204,14 @@ function confirmSub() {
 
 function showEndModal() {
   document.getElementById('end-scores').innerHTML = state.scores.map((s, i) => {
-    const info = getMatchInfo(i);
-    return `<div class="final-score-row">
-      <span style="color:var(--muted);font-size:0.78rem;">${info.tijd} · ${info.veld}</span><br>
-      ${info.thuis} – ${info.uit}: <strong>${s.ours} – ${s.them}</strong>
+    const info  = getMatchInfo(i);
+    const kleur = s.ours > s.them ? 'var(--green)' : s.ours < s.them ? 'var(--red)' : 'var(--yellow)';
+    const label = s.ours > s.them ? 'Gewonnen' : s.ours < s.them ? 'Verloren' : 'Gelijk';
+    return `<div class="final-score-row" style="border-bottom:1px solid var(--border);padding:8px 0;">
+      <span style="color:var(--muted);font-size:0.75rem;">${info.tijd} · ${info.veld}</span><br>
+      <span style="font-weight:600;">${info.thuis} – ${info.uit}</span>
+      &nbsp;&nbsp;<strong style="color:${kleur};">${s.ours}–${s.them}</strong>
+      &nbsp;<span style="font-size:0.75rem;color:${kleur};">${label}</span>
     </div>`;
   }).join('');
   openModal('modal-end');
@@ -1154,6 +1280,12 @@ function toggleTimer() {
       }
     }, 1000);
   }
+}
+
+function endMatchEarly() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  showSchemaView();
 }
 
 function resetTimerUI() {
