@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>⚽ De Regenboog</title>
+<style>
+/* ══════════════════════════════════════════════════════════
+   LICHT THEMA
+══════════════════════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:       #f4f6f8;
+  --surface:  #ffffff;
+  --surface2: #f0f2f5;
+  --border:   #dde1e7;
+  --text:     #1a1d23;
+  --muted:    #6b7280;
+  --green:    #16a34a;
+  --green-bg: rgba(22,163,74,0.08);
+  --green-bd: #bbf7d0;
+  --blue:     #1d6fb8;
+  --red:      #dc2626;
+  --red-bg:   rgba(220,38,38,0.08);
+  --red-bd:   #fecaca;
+  --yellow:   #ca8a04;
+  --shadow:   0 1px 4px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+.app { width: 100%; max-width: 440px; padding: 16px; padding-bottom: 32px; }
+
+/* ── VIEWS ───────────────────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── LOADING OVERLAY ─────────────────────────────────── */
+.loading-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; z-index: 500; gap: 16px;
+}
+.loading-overlay.hidden { display: none; }
+.spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--green); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: var(--muted); font-size: 0.9rem; }
+
+/* ── HEADER ──────────────────────────────────────────── */
+.header { text-align: center; padding: 24px 0 28px; }
+.header h1 { font-size: 1.7rem; font-weight: 800; color: var(--green); }
+.header p  { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+
+/* ── CARDS ───────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 0.72rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;
+}
+
+/* ── LOGIN ───────────────────────────────────────────── */
+.login-wrap { padding-top: 48px; }
+.login-wrap .header { padding-bottom: 32px; }
+.pwd-input {
+  width: 100%; padding: 14px 16px; background: var(--surface2);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 1.1rem; outline: none;
+  font-family: inherit; letter-spacing: 3px; margin-bottom: 6px;
+  transition: border-color 0.15s;
+}
+.pwd-input:focus { border-color: var(--green); }
+.pwd-input::placeholder { letter-spacing: 0; color: var(--muted); }
+.pwd-error { color: var(--red); font-size: 0.85rem; text-align: center; margin: 4px 0; display: none; }
+
+/* ── PLAYER ROWS ─────────────────────────────────────── */
+.player-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.player-row:last-child { border-bottom: none; }
+.player-row-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.player-name { font-size: 1rem; font-weight: 700; flex: 1; }
+.keeper-badge {
+  background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+  font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 10px;
+}
+
+.rating-wrap { display: flex; align-items: center; gap: 8px; }
+input[type="range"] {
+  -webkit-appearance: none; width: 90px; height: 4px;
+  background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--green); cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.rating-val { font-size: 1.1rem; font-weight: 800; color: var(--green); width: 22px; text-align: right; }
+
+/* Positie knoppen */
+.pos-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.pos-btn {
+  padding: 4px 9px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--surface2);
+  color: var(--muted); font-size: 0.72rem; font-weight: 700;
+  cursor: pointer; transition: all 0.12s;
+}
+.pos-btn:active { opacity: 0.7; }
+.pos-btn.active-lv  { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+.pos-btn.active-rv  { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+.pos-btn.active-mid { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+.pos-btn.active-lb  { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+.pos-btn.active-rb  { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+
+/* ── MATCH COUNT ─────────────────────────────────────── */
+.setting-row { display: flex; align-items: center; justify-content: space-between; }
+.setting-label { font-size: 1rem; font-weight: 600; }
+.num-ctrl { display: flex; align-items: center; gap: 14px; }
+.num-btn {
+  width: 36px; height: 36px; background: var(--surface2);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 1.3rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background 0.1s;
+}
+.num-btn:active { background: var(--border); }
+.num-val { font-size: 1.4rem; font-weight: 800; color: var(--green); min-width: 24px; text-align: center; }
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn {
+  display: block; width: 100%; padding: 14px; border: none;
+  border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
+  margin-top: 10px; transition: filter 0.15s; text-align: center;
+}
+.btn:active { filter: brightness(0.9); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-blue  { background: var(--blue);  color: #fff; }
+.btn-gray  { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+.btn-red   { background: var(--red);   color: #fff; }
+.btn-sm    { padding: 10px; font-size: 0.9rem; }
+
+/* ── SCHEMA VIEW ─────────────────────────────────────── */
+.match-block {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.match-block-header { background: #f8fafc; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.mh-poule { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.mh-teams { font-size: 1rem; font-weight: 800; margin-bottom: 5px; }
+.mh-meta  { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.mh-badge {
+  font-size: 0.7rem; color: var(--muted); background: var(--surface2);
+  border-radius: 5px; padding: 2px 7px; border: 1px solid var(--border);
+}
+.mh-badge.home { color: var(--green); border-color: var(--green-bd); background: var(--green-bg); }
+
+.play-match-btn {
+  display: block; width: 100%; margin-top: 10px; padding: 9px;
+  background: var(--green); color: #fff; border: none; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 700; cursor: pointer; text-align: center;
+}
+.play-match-btn:active { filter: brightness(0.9); }
+
+.half-section { padding: 12px 14px; }
+.half-section + .half-section { border-top: 1px solid var(--border); }
+.half-label {
+  font-size: 0.7rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px;
+}
+
+/* Mini formatie */
+.formation-mini {
+  background: #e8f5e9; border-radius: 10px; padding: 10px 8px;
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;
+  border: 1px solid #c8e6c9;
+}
+.formation-row { display: flex; justify-content: center; gap: 8px; }
+.mini-chip {
+  background: #fff; border-radius: 10px; padding: 4px 10px;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.07);
+}
+.mc-fwd { border-bottom: 2px solid #dc2626; color: #991b1b; }
+.mc-mid { border-bottom: 2px solid #7c3aed; color: #6d28d9; }
+.mc-def { border-bottom: 2px solid #16a34a; color: #166534; }
+.mc-gk  { border-bottom: 2px solid #d97706; color: #92400e; }
+
+.bank-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bank-label { font-size: 0.72rem; color: var(--muted); }
+.bank-chip { background: var(--surface2); border-radius: 6px; padding: 2px 8px; font-size: 0.78rem; color: var(--muted); border: 1px solid var(--border); }
+
+.sub-hint { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
+.sub-hint span.in  { color: var(--green); font-weight: 700; }
+.sub-hint span.out { color: var(--red);   font-weight: 700; }
+
+/* Speeltijd */
+.pt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pt-item {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
+}
+.pt-name { font-size: 0.88rem; font-weight: 500; }
+.pt-min  { font-size: 0.95rem; font-weight: 800; color: var(--green); }
+
+/* ── MATCH VIEW ──────────────────────────────────────── */
+.match-topbar {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 12px; gap: 8px;
+}
+.match-topbar-left h2 { font-size: 1rem; font-weight: 800; line-height: 1.3; }
+.match-opponent { font-size: 0.82rem; color: var(--green); font-weight: 700; margin-top: 2px; }
+.match-meta-line { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+.score-box {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 8px 10px; display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  box-shadow: var(--shadow);
+}
+.score-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.score-col-label { font-size: 0.62rem; color: var(--muted); font-weight: 600; }
+.score-num { font-size: 1.9rem; font-weight: 900; line-height: 1; min-width: 26px; text-align: center; }
+.score-sep { font-size: 1.3rem; color: var(--muted); padding: 0 2px; }
+.score-col-btns { display: flex; flex-direction: column; gap: 2px; }
+.score-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 5px; width: 26px; height: 20px; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.score-btn:active { background: var(--border); }
+
+/* SVG Veld */
+.field-wrap { position: relative; margin: 0 auto; max-width: 320px; margin-bottom: 10px; }
+.field-svg  { width: 100%; height: auto; display: block; border-radius: 10px; box-shadow: var(--shadow); }
+
+/* Timer */
+.timer-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px; text-align: center; box-shadow: var(--shadow);
+}
+.timer-digits {
+  font-size: 3.2rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  letter-spacing: 2px; line-height: 1; color: var(--text); transition: color 0.3s;
+}
+.timer-digits.t-warn   { color: var(--yellow); }
+.timer-digits.t-danger { color: var(--red); }
+.timer-half-ind { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+.timer-btns { display: flex; gap: 8px; margin-top: 10px; }
+.timer-btns .btn { margin-top: 0; }
+
+/* Bank */
+.bench-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+}
+.bench-title { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+.bench-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.bench-chip {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 20px; padding: 6px 14px; font-size: 0.9rem; font-weight: 600;
+}
+.bench-chip.sub-out {
+  background: var(--red-bg); border-color: var(--red-bd); color: var(--red);
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1a1d23; color: #fff; font-weight: 700; font-size: 0.95rem;
+  padding: 12px 20px; border-radius: 10px; z-index: 300; white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── MODALS ──────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px;
+}
+.overlay.hidden { display: none; }
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 24px; width: 100%; max-width: 360px; text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.modal-box h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 16px; }
+.sub-item {
+  display: flex; align-items: center; gap: 10px; background: var(--surface2);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;
+  font-size: 0.95rem; text-align: left; border: 1px solid var(--border);
+}
+.sub-out  { color: var(--red);   font-weight: 700; }
+.sub-in   { color: var(--green); font-weight: 700; }
+.sub-arrow{ color: var(--muted); font-size: 1.1rem; }
+.final-score-row { margin: 8px 0; font-size: 0.95rem; }
+.final-score-row strong { color: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay hidden" id="loading-overlay">
+  <div class="spinner"></div>
+  <p class="loading-text">Laden…</p>
+</div>
+
+<div class="app">
+
+  <!-- ══ VIEW: LOGIN ══ -->
+  <div id="view-login" class="view active">
+    <div class="login-wrap">
+      <div class="header">
+        <h1>⚽ De Regenboog</h1>
+        <p>Schoolvoetbaltoernooi</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Toegang</div>
+        <input class="pwd-input" type="password" id="pwd-input"
+          placeholder="Wachtwoord…"
+          onkeydown="if(event.key==='Enter') doLogin()">
+        <p class="pwd-error" id="pwd-error">Ongeldig wachtwoord. Probeer opnieuw.</p>
+        <button class="btn btn-green" id="login-btn" onclick="doLogin()">Inloggen →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: SETUP ══ -->
+  <div id="view-setup" class="view">
+    <div class="header">
+      <h1>⚽ De Regenboog</h1>
+      <p>Geef elk cijfer &amp; voorkeurspositie</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Spelers</div>
+      <div id="player-list"><!-- JS --></div>
+    </div>
+
+    <div class="card">
+      <div class="setting-row">
+        <span class="setting-label">Aantal wedstrijden</span>
+        <div class="num-ctrl">
+          <button class="num-btn" onclick="changeMatches(-1)">−</button>
+          <span class="num-val" id="num-matches-display">3</span>
+          <button class="num-btn" onclick="changeMatches(1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-green" onclick="onGenerateSchema()">Genereer wisselschema ▶</button>
+  </div>
+
+  <!-- ══ VIEW: SCHEMA ══ -->
+  <div id="view-schema" class="view">
+    <div class="header">
+      <h1>📋 Wisselschema</h1>
+      <p id="schema-sub"></p>
+    </div>
+    <div id="schema-content"><!-- JS --></div>
+    <div class="card">
+      <div class="card-title">Totale speeltijd</div>
+      <div class="pt-grid" id="pt-grid"><!-- JS --></div>
+    </div>
+    <button class="btn btn-gray btn-sm" onclick="showView('view-setup')">← Terug naar setup</button>
+  </div>
+
+  <!-- ══ VIEW: MATCH ══ -->
+  <div id="view-match" class="view">
+    <div class="match-topbar">
+      <div class="match-topbar-left">
+        <h2 id="match-title"></h2>
+        <div class="match-opponent" id="match-opponent"></div>
+        <div class="match-meta-line" id="match-meta"></div>
+        <div class="match-meta-line" id="match-half-label"></div>
+      </div>
+      <div class="score-box">
+        <div class="score-col">
+          <span class="score-col-label">Wij</span>
+          <div class="score-col-btns">
+            <button class="score-btn" onclick="changeScore('ours',1)">+</button>
+            <button class="score-btn" onclick="changeScore('ours',-1)">−</button>
+          </div>
+        </div>
+        <div class="score-col"><span class="score-num" id="score-ours">0</span></div>
+        <span class="score-sep">–</span>
+        <div class="score-col"><span class="score-num" id="score-them">0</span></div>
+        <div class="score-col">
+          <span class="score-col-label">Zij</span>
+          <div class="score-col-btns">
+            <button class="score-btn" onclick="changeScore('them',1)">+</button>
+            <button class="score-btn" onclick="changeScore('them',-1)">−</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SVG Veld -->
+    <div class="field-wrap">
+      <svg class="field-svg" viewBox="0 0 300 430" xmlns="http://www.w3.org/2000/svg">
+        <!-- Veld -->
+        <rect width="300" height="430" rx="10" fill="#2d8a2d"/>
+        <rect x="0" y="0"   width="300" height="43"  fill="rgba(0,0,0,0.05)"/>
+        <rect x="0" y="86"  width="300" height="43"  fill="rgba(0,0,0,0.05)"/>
+        <rect x="0" y="172" width="300" height="43"  fill="rgba(0,0,0,0.05)"/>
+        <rect x="0" y="258" width="300" height="43"  fill="rgba(0,0,0,0.05)"/>
+        <rect x="0" y="344" width="300" height="43"  fill="rgba(0,0,0,0.05)"/>
+        <rect x="8" y="8" width="284" height="414" rx="4" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+        <line x1="8" y1="215" x2="292" y2="215" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+        <circle cx="150" cy="215" r="42" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+        <circle cx="150" cy="215" r="3" fill="rgba(255,255,255,0.7)"/>
+        <rect x="72"  y="8"   width="156" height="65" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+        <rect x="108" y="8"   width="84"  height="32" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+        <circle cx="150" cy="52" r="3" fill="rgba(255,255,255,0.55)"/>
+        <rect x="72"  y="357" width="156" height="65" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+        <rect x="108" y="390" width="84"  height="32" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+        <circle cx="150" cy="378" r="3" fill="rgba(255,255,255,0.55)"/>
+        <path d="M8,8 Q18,8 18,18"     fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+        <path d="M292,8 Q282,8 282,18" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+        <path d="M8,422 Q18,422 18,412"     fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+        <path d="M292,422 Q282,422 282,412" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"/>
+        <text x="150" y="182" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="9" font-family="sans-serif">▲ aanvallen</text>
+
+        <!-- LF -->
+        <g id="svg-lf">
+          <circle cx="82" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
+          <text x="82" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
+          <text x="82" y="101" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
+        </g>
+        <!-- RF -->
+        <g id="svg-rf">
+          <circle cx="218" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
+          <text x="218" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
+          <text x="218" y="101" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
+        </g>
+        <!-- CM -->
+        <g id="svg-cm">
+          <circle cx="150" cy="215" r="28" fill="#6d28d9" stroke="#fff" stroke-width="2.5"/>
+          <text x="150" y="208" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
+          <text x="150" y="220" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
+        </g>
+        <!-- LB -->
+        <g id="svg-lb">
+          <circle cx="82" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
+          <text x="82" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LB</text>
+          <text x="82" y="335" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
+        </g>
+        <!-- RB -->
+        <g id="svg-rb">
+          <circle cx="218" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
+          <text x="218" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RB</text>
+          <text x="218" y="335" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
+        </g>
+        <!-- GK Boaz -->
+        <g id="svg-gk">
+          <circle cx="150" cy="405" r="20" fill="#92400e" stroke="#fff" stroke-width="2.5"/>
+          <text x="150" y="402" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="7.5" font-family="sans-serif">KP</text>
+          <text x="150" y="411" text-anchor="middle" fill="#fff" font-size="9.5" font-weight="700" font-family="sans-serif">Boaz</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-card">
+      <div class="timer-digits" id="timer-digits">10:00</div>
+      <div class="timer-half-ind" id="timer-half-ind">Eerste helft · wissel op 5:00</div>
+      <div class="timer-btns">
+        <button class="btn btn-blue" id="timer-toggle-btn" onclick="toggleTimer()" style="margin:0;flex:1;">▶ Start</button>
+        <button class="btn btn-gray" onclick="resetTimerUI()" style="margin:0;width:auto;padding:14px 16px;">↺</button>
+      </div>
+    </div>
+
+    <!-- Bank -->
+    <div class="bench-card">
+      <div class="bench-title">Bank</div>
+      <div class="bench-chips" id="bench-chips"><!-- JS --></div>
+    </div>
+
+    <button class="btn btn-green" id="action-btn" onclick="onActionBtn()">Wissel doorvoeren ↔</button>
+    <button class="btn btn-gray btn-sm" onclick="showView('view-schema')" style="margin-top:8px;">← Terug naar schema</button>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- ══ MODAL: Wissels ══ -->
+<div class="overlay hidden" id="modal-sub">
+  <div class="modal-box">
+    <h2>🔄 Wissels (5 min)</h2>
+    <div id="sub-list"></div>
+    <button class="btn btn-green" onclick="confirmSub()">Bevestig wissels ✓</button>
+    <button class="btn btn-gray btn-sm" onclick="closeModal('modal-sub')" style="margin-top:6px;">Annuleer</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Einde ══ -->
+<div class="overlay hidden" id="modal-end">
+  <div class="modal-box">
+    <h2>🏆 Toernooi afgelopen!</h2>
+    <div id="end-scores" style="margin:16px 0;"></div>
+    <button class="btn btn-green" onclick="onRestart()">Opnieuw beginnen</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTEN
+// ═══════════════════════════════════════════════════════════════
+const TEAM_NAME = 'De Regenboog';
+
+const MATCH_DATA = [
+  { poule:'Poule B – Jongens', veld:'Veld 1D', tijd:'14:45', thuis:'De Regenboog', uit:'De Westhoek'  },
+  { poule:'Poule B – Jongens', veld:'Veld 1D', tijd:'15:00', thuis:'Het Balkon',   uit:'De Regenboog' },
+  { poule:'Poule B – Jongens', veld:'Veld 1A', tijd:'15:45', thuis:'De Regenboog', uit:'De Ichthus 2' },
+];
+
+const POSITIONS = ['LF','RF','CM','LB','RB'];
+const POS_SHORT = { LF:'LV', RF:'RV', CM:'MID', LB:'LB', RB:'RB' };
+const POS_CSS   = { LF:'lv', RF:'rv', CM:'mid', LB:'lb', RB:'rb' };
+
+const DEFAULT_PLAYERS = [
+  { name:'Louie',  rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Alper',  rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Bo',     rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Boaz',   rating:10, preferredPositions:[], isKeeper:true  },
+  { name:'Ferdi',  rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Jayce',  rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Mick',   rating:5, preferredPositions:[], isKeeper:false },
+  { name:'Pepijn', rating:5, preferredPositions:[], isKeeper:false },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════════════════════════════════
+let state = loadStateLocal() || freshState();
+
+function freshState() {
+  return {
+    players:      DEFAULT_PLAYERS.map(p => ({ ...p })),
+    numMatches:   3,
+    schedule:     null,
+    currentMatch: 0,
+    currentHalf:  0,
+    scores:       [],
+  };
+}
+
+function loadStateLocal() {
+  try { const s = localStorage.getItem('svt3_state'); return s ? JSON.parse(s) : null; }
+  catch { return null; }
+}
+
+let apiSaveTimer = null;
+
+function saveState() {
+  // Lokaal opslaan
+  try { localStorage.setItem('svt3_state', JSON.stringify(state)); } catch (_) {}
+  // Naar server sturen (debounced)
+  clearTimeout(apiSaveTimer);
+  apiSaveTimer = setTimeout(() => apiSaveData(state), 1500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API
+// ═══════════════════════════════════════════════════════════════
+let sessionPw = localStorage.getItem('svt3_pw') || '';
+
+const CLIENT_PASSWORD = 'regenboog';
+
+async function apiVerify(pw) {
+  try {
+    const r = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    return r.ok;
+  } catch {
+    // Geen server (bijv. bestand direct geopend): controleer lokaal
+    return pw === CLIENT_PASSWORD;
+  }
+}
+
+async function apiLoadData() {
+  if (!sessionPw) return null;
+  try {
+    const r = await fetch('/api/data', { headers: { 'X-Password': sessionPw } });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function apiSaveData(data) {
+  if (!sessionPw) return;
+  try {
+    await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Password': sessionPw },
+      body: JSON.stringify(data),
+    });
+  } catch (_) {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════════════
+async function doLogin() {
+  const input = document.getElementById('pwd-input');
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('pwd-error');
+  const pw    = input.value.trim().toLowerCase();
+
+  btn.textContent = 'Laden…';
+  btn.disabled = true;
+  err.style.display = 'none';
+
+  const ok = await apiVerify(pw);
+  if (ok) {
+    sessionPw = pw;
+    localStorage.setItem('svt3_pw', pw);
+    await loadAndStart();
+  } else {
+    btn.textContent = 'Inloggen →';
+    btn.disabled = false;
+    err.style.display = 'block';
+    input.value = '';
+    input.focus();
+  }
+}
+
+async function loadAndStart() {
+  showLoading(true);
+  const apiData = await apiLoadData();
+  if (apiData && apiData.players) {
+    // Volledige state overnemen van server
+    Object.assign(state, apiData);
+    // Migreer preferredPos (string) → preferredPositions (array)
+    state.players.forEach(p => {
+      if (!p.preferredPositions) {
+        p.preferredPositions = p.preferredPos ? [p.preferredPos] : [];
+        delete p.preferredPos;
+      }
+    });
+    try { localStorage.setItem('svt3_state', JSON.stringify(state)); } catch (_) {}
+  }
+  showLoading(false);
+  renderSetup();
+  showView('view-setup');
+}
+
+function showLoading(show) {
+  document.getElementById('loading-overlay').classList.toggle('hidden', !show);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HULPFUNCTIES
+// ═══════════════════════════════════════════════════════════════
+function getMatchInfo(m) {
+  const data = MATCH_DATA[m];
+  if (!data) return { opponent:`Tegenstander ${m+1}`, isHome:true, veld:'', tijd:'', poule:'', thuis:`Wedstrijd ${m+1}`, uit:'' };
+  const isHome = data.thuis === TEAM_NAME;
+  return { opponent: isHome ? data.uit : data.thuis, isHome, ...data };
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function showToast(msg, duration = 3000) {
+  const old = document.querySelector('.toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETUP VIEW
+// ═══════════════════════════════════════════════════════════════
+function renderSetup() {
+  const list = document.getElementById('player-list');
+  list.innerHTML = state.players.map(p => {
+    if (p.isKeeper) {
+      return `
+        <div class="player-row">
+          <div class="player-row-top">
+            <span class="player-name">${p.name}</span>
+            <span class="keeper-badge">🧤 Vaste keeper</span>
+          </div>
+        </div>`;
+    }
+    const prefs = p.preferredPositions || [];
+    const posBtns = POSITIONS.map(pos => {
+      const active = prefs.includes(pos) ? `active-${POS_CSS[pos]}` : '';
+      return `<button class="pos-btn ${active}" onclick="updatePos('${p.name}','${pos}')">${POS_SHORT[pos]}</button>`;
+    }).join('');
+    return `
+      <div class="player-row">
+        <div class="player-row-top">
+          <span class="player-name">${p.name}</span>
+          <div class="rating-wrap">
+            <input type="range" min="0" max="10" value="${p.rating}"
+              oninput="updateRating('${p.name}',this.value)">
+            <span class="rating-val" id="rv-${p.name}">${p.rating}</span>
+          </div>
+        </div>
+        <div class="pos-btns">${posBtns}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('num-matches-display').textContent = state.numMatches;
+}
+
+function updateRating(name, val) {
+  const v = parseInt(val);
+  const p = state.players.find(x => x.name === name);
+  if (p) p.rating = v;
+  const el = document.getElementById('rv-' + name);
+  if (el) el.textContent = v;
+  saveState();
+}
+
+function updatePos(name, pos) {
+  const p = state.players.find(x => x.name === name);
+  if (!p) return;
+  if (!p.preferredPositions) p.preferredPositions = [];
+  const idx = p.preferredPositions.indexOf(pos);
+  if (idx >= 0) p.preferredPositions.splice(idx, 1);
+  else           p.preferredPositions.push(pos);
+  saveState();
+  renderSetup();
+}
+
+function changeMatches(delta) {
+  state.numMatches = Math.max(1, Math.min(12, state.numMatches + delta));
+  document.getElementById('num-matches-display').textContent = state.numMatches;
+  saveState();
+}
+
+function onGenerateSchema() {
+  state.schedule = generateSchedule();
+  state.scores   = Array.from({ length: state.numMatches }, () => ({ ours:0, them:0 }));
+  state.currentMatch = 0;
+  state.currentHalf  = 0;
+  saveState();
+  renderSchema();
+  showView('view-schema');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ALGORITME
+// ═══════════════════════════════════════════════════════════════
+function assignPositions(players) {
+  const result   = {};
+  const assigned = new Set();
+  const filled   = new Set();
+
+  // Hoeveel spelers prefereren elke positie?
+  const prefCount = {};
+  POSITIONS.forEach(p => prefCount[p] = 0);
+  players.forEach(p => {
+    (p.preferredPositions || []).forEach(pos => {
+      if (POSITIONS.includes(pos)) prefCount[pos]++;
+    });
+  });
+
+  // Sorteer posities: minst betwist eerst
+  POSITIONS.filter(pos => prefCount[pos] > 0)
+    .sort((a, b) => prefCount[a] - prefCount[b])
+    .forEach(pos => {
+      const cands = players
+        .filter(p => (p.preferredPositions || []).includes(pos) && !assigned.has(p.name))
+        .sort((a, b) => b.rating - a.rating);
+      if (cands.length > 0) {
+        result[pos] = cands[0].name;
+        assigned.add(cands[0].name);
+        filled.add(pos);
+      }
+    });
+
+  // Vul rest op basis van rating (hoog = meer aanvallend)
+  const remainPlayers = players.filter(p => !assigned.has(p.name));
+  POSITIONS.filter(pos => !filled.has(pos)).forEach((pos, i) => {
+    if (remainPlayers[i]) result[pos] = remainPlayers[i].name;
+  });
+
+  return result;
+}
+
+function generateSchedule() {
+  const field    = state.players.filter(p => !p.isKeeper);
+  const n        = field.length;   // 7
+  const bench    = n - 5;          // 2
+  const numSlots = state.numMatches * 2;
+
+  const totalBench = numSlots * bench;
+  const baseQ  = Math.floor(totalBench / n);
+  const extra  = totalBench % n;
+
+  const sorted = [...field].sort((a, b) => b.rating - a.rating);
+  const quota  = {};
+  sorted.forEach((p, i) => { quota[p.name] = i < (n - extra) ? baseQ : baseQ + 1; });
+
+  const used = {};
+  field.forEach(p => used[p.name] = 0);
+
+  const slots     = [];
+  let prevBench   = [];
+
+  for (let s = 0; s < numSlots; s++) {
+    let cands = field
+      .filter(p => used[p.name] < quota[p.name] && !prevBench.includes(p.name))
+      .sort((a, b) => a.rating - b.rating);
+
+    let bankSpelers = cands.slice(0, bench);
+
+    if (bankSpelers.length < bench) {
+      const al = bankSpelers.map(p => p.name);
+      const extra2 = field
+        .filter(p => used[p.name] < quota[p.name] && !al.includes(p.name))
+        .sort((a, b) => a.rating - b.rating)
+        .slice(0, bench - bankSpelers.length);
+      bankSpelers = [...bankSpelers, ...extra2];
+    }
+
+    bankSpelers.forEach(p => used[p.name]++);
+    const bankNamen = bankSpelers.map(p => p.name);
+    const velders   = field.filter(p => !bankNamen.includes(p.name)).sort((a, b) => b.rating - a.rating);
+
+    slots.push({ ...assignPositions(velders), bench: bankNamen });
+    prevBench = bankNamen;
+  }
+  return slots;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHEMA VIEW
+// ═══════════════════════════════════════════════════════════════
+function renderSchema() {
+  document.getElementById('schema-sub').textContent =
+    `${state.numMatches} wedstrijden · 2 helften van 5 min`;
+
+  const content = document.getElementById('schema-content');
+  content.innerHTML = '';
+
+  for (let m = 0; m < state.numMatches; m++) {
+    const info = getMatchInfo(m);
+    const homeBadge = info.isHome
+      ? `<span class="mh-badge home">🏠 Thuis</span>`
+      : `<span class="mh-badge">✈️ Uit</span>`;
+
+    const block = document.createElement('div');
+    block.className = 'match-block';
+    block.innerHTML = `
+      <div class="match-block-header">
+        <div class="mh-poule">${info.poule}</div>
+        <div class="mh-teams">${info.thuis} – ${info.uit}</div>
+        <div class="mh-meta">
+          ${homeBadge}
+          <span class="mh-badge">🕐 ${info.tijd}</span>
+          <span class="mh-badge">📍 ${info.veld}</span>
+        </div>
+        <button class="play-match-btn" onclick="startMatch(${m})">▶ Speel deze wedstrijd</button>
+      </div>`;
+
+    for (let h = 0; h < 2; h++) {
+      const slotIdx  = m * 2 + h;
+      const slot     = state.schedule[slotIdx];
+      const halfName = h === 0 ? 'Eerste helft (0–5 min)' : 'Tweede helft (5–10 min)';
+
+      let subHint = '';
+      if (h === 1) {
+        const prev       = state.schedule[slotIdx - 1];
+        const prevField  = POSITIONS.map(pos => prev[pos]);
+        const eruit      = prevField.filter(n => slot.bench.includes(n));
+        const erin       = prev.bench.filter(n => !slot.bench.includes(n));
+        if (eruit.length) {
+          subHint = `<div class="sub-hint">
+            🔄 In: <span class="in">${erin.join(', ')}</span> &nbsp;·&nbsp;
+            Uit: <span class="out">${eruit.join(', ')}</span>
+          </div>`;
+        }
+      }
+
+      const half = document.createElement('div');
+      half.className = 'half-section';
+      half.innerHTML = `
+        <div class="half-label">${halfName}</div>
+        <div class="formation-mini">
+          <div class="formation-row">
+            <div class="mini-chip mc-fwd">${slot.LF}</div>
+            <div class="mini-chip mc-fwd">${slot.RF}</div>
+          </div>
+          <div class="formation-row"><div class="mini-chip mc-mid">${slot.CM}</div></div>
+          <div class="formation-row">
+            <div class="mini-chip mc-def">${slot.LB}</div>
+            <div class="mini-chip mc-def">${slot.RB}</div>
+          </div>
+          <div class="formation-row"><div class="mini-chip mc-gk">Boaz 🧤</div></div>
+        </div>
+        <div class="bank-row">
+          <span class="bank-label">Bank:</span>
+          ${slot.bench.map(n => `<span class="bank-chip">${n}</span>`).join('')}
+        </div>
+        ${subHint}`;
+      block.appendChild(half);
+    }
+    content.appendChild(block);
+  }
+  renderPlaytime();
+}
+
+function renderPlaytime() {
+  const field = state.players.filter(p => !p.isKeeper);
+  const playCounts = {};
+  field.forEach(p => playCounts[p.name] = 0);
+  state.schedule.forEach(slot => {
+    POSITIONS.forEach(pos => { if (slot[pos]) playCounts[slot[pos]]++; });
+  });
+
+  const numSlots = state.numMatches * 2;
+  document.getElementById('pt-grid').innerHTML =
+    [{ name:'Boaz', isKeeper:true }, ...field].map(p => {
+      const min = (p.isKeeper ? numSlots : (playCounts[p.name] || 0)) * 5;
+      return `<div class="pt-item">
+        <span class="pt-name">${p.name}${p.isKeeper ? ' 🧤' : ''}</span>
+        <span class="pt-min">${min} min</span>
+      </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MATCH VIEW
+// ═══════════════════════════════════════════════════════════════
+function startMatch(matchIndex) {
+  state.currentMatch = matchIndex;
+  state.currentHalf  = 0;
+  state.scores[matchIndex] = { ours:0, them:0 };
+  saveState();
+  renderMatch();
+  showView('view-match');
+}
+
+function renderMatch() {
+  const m    = state.currentMatch;
+  const h    = state.currentHalf;
+  const slot = state.schedule[m * 2 + h];
+  const info = getMatchInfo(m);
+
+  document.getElementById('match-title').textContent     = `${info.thuis} – ${info.uit}`;
+  document.getElementById('match-opponent').textContent  = `vs ${info.opponent} ${info.isHome ? '(thuis)' : '(uit)'}`;
+  document.getElementById('match-meta').textContent      = `${info.veld} · ${info.tijd}`;
+  document.getElementById('match-half-label').textContent = h === 0 ? 'Eerste helft' : 'Tweede helft';
+
+  const sc = state.scores[m];
+  document.getElementById('score-ours').textContent = sc.ours;
+  document.getElementById('score-them').textContent = sc.them;
+
+  updateField(slot);
+  renderBench(slot.bench, []);
+  updateActionBtn();
+  resetTimerUI();
+}
+
+function updateField(slot, highlightIn = []) {
+  const defStroke = { lf:'#fff', rf:'#fff', cm:'#fff', lb:'#fff', rb:'#fff' };
+  ['lf','rf','cm','lb','rb'].forEach(pos => {
+    const name   = slot[pos.toUpperCase()];
+    const nameEl = document.getElementById(`svg-${pos}-name`);
+    const circle = document.querySelector(`#svg-${pos} circle`);
+    nameEl.textContent = name || '-';
+    nameEl.setAttribute('font-size', name && name.length > 5 ? '9.5' : '11');
+    if (highlightIn.includes(name)) {
+      circle.setAttribute('stroke', '#facc15');
+      circle.setAttribute('stroke-width', '4');
+    } else {
+      circle.setAttribute('stroke', defStroke[pos]);
+      circle.setAttribute('stroke-width', '2.5');
+    }
+  });
+}
+
+function renderBench(benchNames, highlightOut) {
+  document.getElementById('bench-chips').innerHTML = benchNames.map(name => {
+    const cls = highlightOut.includes(name) ? 'bench-chip sub-out' : 'bench-chip';
+    return `<div class="${cls}">${name}</div>`;
+  }).join('');
+}
+
+function updateActionBtn() {
+  const m   = state.currentMatch;
+  const h   = state.currentHalf;
+  const btn = document.getElementById('action-btn');
+  if (h === 0) {
+    btn.textContent = 'Wissel doorvoeren ↔';
+    btn.className = 'btn btn-green';
+  } else if (m < state.numMatches - 1) {
+    btn.textContent = 'Volgende wedstrijd →';
+    btn.className = 'btn btn-blue';
+  } else {
+    btn.textContent = '🏆 Toernooi afsluiten';
+    btn.className = 'btn btn-red';
+  }
+}
+
+function onActionBtn() {
+  const m = state.currentMatch;
+  const h = state.currentHalf;
+  if (h === 0) {
+    showSubModal();
+  } else if (m < state.numMatches - 1) {
+    state.currentMatch++;
+    state.currentHalf = 0;
+    saveState();
+    renderMatch();
+  } else {
+    showEndModal();
+  }
+}
+
+function showSubModal() {
+  const m    = state.currentMatch;
+  const s0   = state.schedule[m * 2];
+  const s1   = state.schedule[m * 2 + 1];
+  const pf   = POSITIONS.map(p => s0[p]);
+  const eruit = pf.filter(n => s1.bench.includes(n));
+  const erin  = s0.bench.filter(n => !s1.bench.includes(n));
+
+  document.getElementById('sub-list').innerHTML = eruit.map((out, i) => `
+    <div class="sub-item">
+      <span class="sub-out">⬇ ${out}</span>
+      <span class="sub-arrow">→</span>
+      <span class="sub-in">⬆ ${erin[i] || '?'}</span>
+    </div>`).join('');
+  openModal('modal-sub');
+}
+
+function confirmSub() {
+  closeModal('modal-sub');
+  const m  = state.currentMatch;
+  state.currentHalf = 1;
+  saveState();
+
+  const s0    = state.schedule[m * 2];
+  const s1    = state.schedule[m * 2 + 1];
+  const pf    = POSITIONS.map(p => s0[p]);
+  const eruit = pf.filter(n => s1.bench.includes(n));
+  const erin  = s0.bench.filter(n => !s1.bench.includes(n));
+
+  document.getElementById('match-half-label').textContent = 'Tweede helft';
+  document.getElementById('timer-half-ind').textContent   = 'Tweede helft (5–10 min)';
+
+  updateField(s1, erin);
+  renderBench(s1.bench, eruit);
+  updateActionBtn();
+  resetTimerUI();
+
+  setTimeout(() => { updateField(s1); renderBench(s1.bench, []); }, 3000);
+}
+
+function showEndModal() {
+  document.getElementById('end-scores').innerHTML = state.scores.map((s, i) => {
+    const info = getMatchInfo(i);
+    return `<div class="final-score-row">
+      <span style="color:var(--muted);font-size:0.78rem;">${info.tijd} · ${info.veld}</span><br>
+      ${info.thuis} – ${info.uit}: <strong>${s.ours} – ${s.them}</strong>
+    </div>`;
+  }).join('');
+  openModal('modal-end');
+}
+
+function onRestart() {
+  closeModal('modal-end');
+  state.schedule     = null;
+  state.currentMatch = 0;
+  state.currentHalf  = 0;
+  state.scores       = [];
+  saveState();
+  renderSetup();
+  showView('view-setup');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCORE
+// ═══════════════════════════════════════════════════════════════
+function changeScore(team, delta) {
+  const m = state.currentMatch;
+  state.scores[m][team] = Math.max(0, state.scores[m][team] + delta);
+  document.getElementById('score-' + team).textContent = state.scores[m][team];
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TIMER  (10 min · automatische wissel op 5:00)
+// ═══════════════════════════════════════════════════════════════
+let timerSec      = 10 * 60;
+let timerInterval = null;
+let timerRunning  = false;
+let subAlertShown = false;
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-toggle-btn').textContent = '▶ Hervat';
+  } else {
+    timerRunning = true;
+    document.getElementById('timer-toggle-btn').textContent = '⏸ Pauze';
+    timerInterval = setInterval(() => {
+      timerSec--;
+      refreshTimerDisplay();
+
+      // Op precies 5:00 → wissel-alert
+      if (timerSec === 5 * 60 && state.currentHalf === 0 && !subAlertShown) {
+        subAlertShown = true;
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-toggle-btn').textContent = '▶ Hervat';
+        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+        showToast('⏱ 5 minuten – tijd voor wissels!', 4000);
+        showSubModal();
+      }
+
+      if (timerSec <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerSec = 0;
+        document.getElementById('timer-toggle-btn').textContent = '▶ Start';
+        refreshTimerDisplay();
+        if (navigator.vibrate) navigator.vibrate([500, 100, 500, 100, 500]);
+        showToast('⏱ Wedstrijd afgelopen!', 4000);
+      }
+    }, 1000);
+  }
+}
+
+function resetTimerUI() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSec = 10 * 60;
+  subAlertShown = false;
+  document.getElementById('timer-toggle-btn').textContent = '▶ Start';
+  document.getElementById('timer-half-ind').textContent =
+    state.currentHalf === 0 ? 'Eerste helft · wissel op 5:00' : 'Tweede helft (5–10 min)';
+  refreshTimerDisplay();
+}
+
+function refreshTimerDisplay() {
+  const m  = Math.floor(timerSec / 60);
+  const s  = timerSec % 60;
+  const el = document.getElementById('timer-digits');
+  el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  el.className = 'timer-digits';
+  if (timerSec <= 60)       el.classList.add('t-danger');
+  else if (timerSec <= 120) el.classList.add('t-warn');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  // Migreer oude state: preferredPos (string) → preferredPositions (array)
+  if (state.players) {
+    state.players.forEach(p => {
+      if (!p.preferredPositions) {
+        p.preferredPositions = p.preferredPos ? [p.preferredPos] : [];
+        delete p.preferredPos;
+      }
+    });
+  }
+
+  if (sessionPw) {
+    // Al eerder ingelogd op dit apparaat
+    await loadAndStart();
+  } else {
+    showView('view-login');
+    setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
