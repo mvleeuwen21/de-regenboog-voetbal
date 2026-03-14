@@ -391,14 +391,14 @@ input[type="range"]::-webkit-slider-thumb {
       </div>
     </div>
 
-    <button class="btn btn-green" onclick="onGenerateSchemaWithAuth()">Genereer wisselschema ▶</button>
+    <button class="btn btn-green" onclick="onGenerateSchema()">Genereer wisselschema ▶</button>
   </div>
 
   <!-- ══ VIEW: SCHEMA ══ -->
   <div id="view-schema" class="view">
     <div class="tabs">
       <button class="tab-btn tab-active">📋 Schema</button>
-      <button class="tab-btn" onclick="showView('view-setup');renderSetup()">⚙ Configuratie</button>
+      <button class="tab-btn" onclick="openConfiguratie()">⚙ Configuratie</button>
     </div>
     <div id="schema-content" style="margin-top:12px;"><!-- JS --></div>
     <div class="card">
@@ -528,16 +528,16 @@ input[type="range"]::-webkit-slider-thumb {
 
 </div><!-- /.app -->
 
-<!-- ══ MODAL: Wachtwoord schema ══ -->
-<div class="overlay hidden" id="modal-schema-pw">
+<!-- ══ MODAL: Wachtwoord configuratie ══ -->
+<div class="overlay hidden" id="modal-config-pw">
   <div class="modal-box">
-    <h2>🔒 Wisselschema genereren</h2>
-    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">Voer het wachtwoord in om het schema te overschrijven.</p>
-    <input class="pwd-input" type="password" id="schema-pw-input" placeholder="Wachtwoord…"
-      onkeydown="if(event.key==='Enter') confirmGenerateSchema()">
-    <p class="pwd-error" id="schema-pw-error">Ongeldig wachtwoord.</p>
-    <button class="btn btn-green" onclick="confirmGenerateSchema()">Genereer ▶</button>
-    <button class="btn btn-gray btn-sm" onclick="closeModal('modal-schema-pw')" style="margin-top:6px;">Annuleer</button>
+    <h2>🔒 Configuratie</h2>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">Voer het wachtwoord in.</p>
+    <input class="pwd-input" type="password" id="config-pw-input" placeholder="Wachtwoord…"
+      onkeydown="if(event.key==='Enter') confirmOpenConfiguratie()">
+    <p class="pwd-error" id="config-pw-error">Ongeldig wachtwoord.</p>
+    <button class="btn btn-green" onclick="confirmOpenConfiguratie()">Openen ▶</button>
+    <button class="btn btn-gray btn-sm" onclick="closeModal('modal-config-pw')" style="margin-top:6px;">Annuleer</button>
   </div>
 </div>
 
@@ -611,6 +611,7 @@ function loadStateLocal() {
 let apiSaveTimer = null;
 
 function saveState() {
+  state.savedAt = Date.now();
   // Lokaal opslaan
   try { localStorage.setItem('svt3_state', JSON.stringify(state)); } catch (_) {}
   // Naar server sturen (debounced)
@@ -689,8 +690,10 @@ async function doLogin() {
 async function loadAndStart() {
   showLoading(true);
   const apiData = await apiLoadData();
-  if (apiData && apiData.players) {
-    // Volledige state overnemen van server
+  const localTs = state.savedAt || 0;
+  const serverTs = (apiData && apiData.savedAt) || 0;
+  // Gebruik server-data alleen als die nieuwer is dan lokale state
+  if (apiData && apiData.players && serverTs >= localTs) {
     Object.assign(state, apiData);
     // Migreer preferredPos (string) → preferredPositions (array)
     state.players.forEach(p => {
@@ -809,26 +812,27 @@ function changeMatches(delta) {
 
 const SCHEMA_PASSWORD = 'wissel';
 
-function onGenerateSchemaWithAuth() {
-  const input = document.getElementById('schema-pw-input');
-  const err   = document.getElementById('schema-pw-error');
+function openConfiguratie() {
+  const input = document.getElementById('config-pw-input');
+  const err   = document.getElementById('config-pw-error');
   if (input) { input.value = ''; }
   if (err)   { err.style.display = 'none'; }
-  openModal('modal-schema-pw');
+  openModal('modal-config-pw');
   setTimeout(() => input && input.focus(), 100);
 }
 
-function confirmGenerateSchema() {
-  const input = document.getElementById('schema-pw-input');
-  const err   = document.getElementById('schema-pw-error');
+function confirmOpenConfiguratie() {
+  const input = document.getElementById('config-pw-input');
+  const err   = document.getElementById('config-pw-error');
   if (input.value.trim().toLowerCase() !== SCHEMA_PASSWORD) {
     err.style.display = 'block';
     input.value = '';
     input.focus();
     return;
   }
-  closeModal('modal-schema-pw');
-  onGenerateSchema();
+  closeModal('modal-config-pw');
+  showView('view-setup');
+  renderSetup();
 }
 
 function onGenerateSchema() {
