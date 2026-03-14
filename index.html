@@ -42,6 +42,16 @@ body {
 .view { display: none; }
 .view.active { display: block; }
 
+/* ── TABS ────────────────────────────────────────────── */
+.tabs { display: flex; gap: 6px; }
+.tab-btn {
+  flex: 1; padding: 10px; border: 1.5px solid var(--border);
+  border-radius: 10px; background: var(--surface2); color: var(--muted);
+  font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.tab-btn:active { filter: brightness(0.9); }
+.tab-active { background: var(--green); color: #fff; border-color: var(--green); }
+
 /* ── LOADING OVERLAY ─────────────────────────────────── */
 .loading-overlay {
   position: fixed; inset: 0; background: var(--bg);
@@ -358,14 +368,14 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
   </div>
 
-  <!-- ══ VIEW: SETUP ══ -->
+  <!-- ══ VIEW: SETUP (Configuratie) ══ -->
   <div id="view-setup" class="view">
-    <div class="header">
-      <h1>⚽ De Regenboog</h1>
-      <p>Geef elk cijfer &amp; voorkeurspositie</p>
+    <div class="tabs">
+      <button class="tab-btn" onclick="showSchemaView()">📋 Schema</button>
+      <button class="tab-btn tab-active">⚙ Configuratie</button>
     </div>
 
-    <div class="card">
+    <div class="card" style="margin-top:12px;">
       <div class="card-title">Spelers</div>
       <div id="player-list"><!-- JS --></div>
     </div>
@@ -381,22 +391,21 @@ input[type="range"]::-webkit-slider-thumb {
       </div>
     </div>
 
-    <button class="btn btn-green" onclick="onGenerateSchema()">Genereer wisselschema ▶</button>
+    <button class="btn btn-green" onclick="onGenerateSchemaWithAuth()">Genereer wisselschema ▶</button>
   </div>
 
   <!-- ══ VIEW: SCHEMA ══ -->
   <div id="view-schema" class="view">
-    <div class="header">
-      <h1>📋 Wisselschema</h1>
-      <p id="schema-sub"></p>
+    <div class="tabs">
+      <button class="tab-btn tab-active">📋 Schema</button>
+      <button class="tab-btn" onclick="showView('view-setup');renderSetup()">⚙ Configuratie</button>
     </div>
-    <div id="schema-content"><!-- JS --></div>
+    <div id="schema-content" style="margin-top:12px;"><!-- JS --></div>
     <div class="card">
       <div class="card-title">Totale speeltijd</div>
       <div class="pt-grid" id="pt-grid"><!-- JS --></div>
     </div>
     <button class="btn btn-blue btn-sm" id="add-match-btn" onclick="addExtraMatch()" style="margin-top:4px;">+ Extra wedstrijd toevoegen</button>
-    <button class="btn btn-gray btn-sm" onclick="showView('view-setup')">← Terug naar setup</button>
   </div>
 
   <!-- ══ VIEW: MATCH ══ -->
@@ -518,6 +527,19 @@ input[type="range"]::-webkit-slider-thumb {
   </div>
 
 </div><!-- /.app -->
+
+<!-- ══ MODAL: Wachtwoord schema ══ -->
+<div class="overlay hidden" id="modal-schema-pw">
+  <div class="modal-box">
+    <h2>🔒 Wisselschema genereren</h2>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;">Voer het wachtwoord in om het schema te overschrijven.</p>
+    <input class="pwd-input" type="password" id="schema-pw-input" placeholder="Wachtwoord…"
+      onkeydown="if(event.key==='Enter') confirmGenerateSchema()">
+    <p class="pwd-error" id="schema-pw-error">Ongeldig wachtwoord.</p>
+    <button class="btn btn-green" onclick="confirmGenerateSchema()">Genereer ▶</button>
+    <button class="btn btn-gray btn-sm" onclick="closeModal('modal-schema-pw')" style="margin-top:6px;">Annuleer</button>
+  </div>
+</div>
 
 <!-- ══ MODAL: Wissels ══ -->
 <div class="overlay hidden" id="modal-sub">
@@ -681,7 +703,12 @@ async function loadAndStart() {
   }
   showLoading(false);
   renderSetup();
-  showView('view-setup');
+  if (state.schedule) {
+    renderSchema();
+    showView('view-schema');
+  } else {
+    showView('view-setup');
+  }
 }
 
 function showLoading(show) {
@@ -778,6 +805,30 @@ function changeMatches(delta) {
   state.numMatches = Math.max(1, Math.min(12, state.numMatches + delta));
   document.getElementById('num-matches-display').textContent = state.numMatches;
   saveState();
+}
+
+const SCHEMA_PASSWORD = 'wissel';
+
+function onGenerateSchemaWithAuth() {
+  const input = document.getElementById('schema-pw-input');
+  const err   = document.getElementById('schema-pw-error');
+  if (input) { input.value = ''; }
+  if (err)   { err.style.display = 'none'; }
+  openModal('modal-schema-pw');
+  setTimeout(() => input && input.focus(), 100);
+}
+
+function confirmGenerateSchema() {
+  const input = document.getElementById('schema-pw-input');
+  const err   = document.getElementById('schema-pw-error');
+  if (input.value.trim().toLowerCase() !== SCHEMA_PASSWORD) {
+    err.style.display = 'block';
+    input.value = '';
+    input.focus();
+    return;
+  }
+  closeModal('modal-schema-pw');
+  onGenerateSchema();
 }
 
 function onGenerateSchema() {
@@ -911,8 +962,6 @@ function generateSchedule() {
 // SCHEMA VIEW
 // ═══════════════════════════════════════════════════════════════
 function renderSchema() {
-  document.getElementById('schema-sub').textContent =
-    `${state.numMatches} wedstrijden · 2 helften van 5 min`;
 
   const content = document.getElementById('schema-content');
   content.innerHTML = '';
