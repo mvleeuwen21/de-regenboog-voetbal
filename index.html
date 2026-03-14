@@ -200,6 +200,14 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 0.85rem; font-weight: 700; cursor: pointer; text-align: center;
 }
 .play-match-btn:active { filter: brightness(0.9); }
+.edit-sub-btn {
+  display: block; width: 100%; margin-top: 6px; padding: 7px;
+  background: transparent; color: var(--muted); border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-align: center;
+}
+.edit-sub-btn:active { background: var(--surface2); }
+.manual-sub-row { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.manual-sub-row:last-child { border-bottom: none; }
 
 .half-section { padding: 12px 14px; }
 .half-section + .half-section { border-top: 1px solid var(--border); }
@@ -523,6 +531,7 @@ input[type="range"]::-webkit-slider-thumb {
     <div id="sub-preview"><!-- JS --></div>
 
     <button class="btn btn-blue" id="action-btn" onclick="onActionBtn()" style="display:none;">Volgende wedstrijd →</button>
+    <button class="edit-sub-btn" id="manual-sub-btn" onclick="openManualSubCurrent()" style="margin-top:6px;">✏️ Pas wissels aan</button>
     <button class="btn btn-gray btn-sm" onclick="showSchemaView()" style="margin-top:6px;">← Terug naar schema</button>
   </div>
 
@@ -538,6 +547,17 @@ input[type="range"]::-webkit-slider-thumb {
     <p class="pwd-error" id="config-pw-error">Ongeldig wachtwoord.</p>
     <button class="btn btn-green" onclick="confirmOpenConfiguratie()">Openen ▶</button>
     <button class="btn btn-gray btn-sm" onclick="closeModal('modal-config-pw')" style="margin-top:6px;">Annuleer</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: Handmatige wissels ══ -->
+<div class="overlay hidden" id="modal-manual-sub">
+  <div class="modal-box">
+    <h2 id="manual-sub-title">✏️ Wissels aanpassen</h2>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Vink aan welke wissels er daadwerkelijk zijn doorgevoerd.</p>
+    <div id="manual-sub-list"></div>
+    <button class="btn btn-blue" onclick="confirmManualSub(true)" style="margin-top:12px;">Bevestig & herbereken toekomstige wedstrijden</button>
+    <button class="btn btn-gray btn-sm" onclick="closeModal('modal-manual-sub')" style="margin-top:6px;">Annuleer</button>
   </div>
 </div>
 
@@ -1120,6 +1140,187 @@ function renderPlaytime() {
     }).join('');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// HANDMATIGE WISSELS
+// ═══════════════════════════════════════════════════════════════
+let manualSubMatchIdx = -1;
+
+function syncSubDropdowns(i) {
+  const inSel  = document.getElementById(`msub-in-${i}`);
+  const outSel = document.getElementById(`msub-out-${i}`);
+  const inVal  = inSel.value;
+  const outVal = outSel.value;
+  const allePlayers = state.players.filter(p => !p.isKeeper).map(p => p.name).sort();
+
+  const rebuild = (sel, selected, exclude) => {
+    sel.innerHTML = `<option value="">— geen —</option>` +
+      allePlayers.filter(n => n !== exclude)
+        .map(n => `<option value="${n}"${n === selected ? ' selected' : ''}>${n}</option>`).join('');
+  };
+
+  rebuild(inSel,  inVal,  outVal);
+  rebuild(outSel, outVal, inVal);
+}
+
+function openManualSubCurrent() {
+  openManualSub(state.currentMatch);
+}
+
+function openManualSub(m) {
+  manualSubMatchIdx = m;
+  const s0 = state.schedule[m * 2];
+  const s1 = state.schedule[m * 2 + 1];
+  if (!s0 || !s1) return;
+
+  const veldSpelers = POSITIONS.map(p => s0[p]);
+  const geplandEruit = veldSpelers.filter(n => s1.bench.includes(n));
+  const geplandErin  = s0.bench.filter(n => !s1.bench.includes(n));
+  const allePlayers  = state.players.filter(p => !p.isKeeper).map(p => p.name).sort();
+
+  document.getElementById('manual-sub-title').textContent = `✏️ Wissels wedstrijd ${m + 1}`;
+
+  const benchPerSlot = allePlayers.length - 5;
+  const numRows = Math.max(benchPerSlot, geplandEruit.length);
+
+  const playerOpts = (selected, exclude) =>
+    `<option value="">— geen —</option>` +
+    allePlayers.filter(n => n !== exclude).map(n => `<option value="${n}"${n === selected ? ' selected' : ''}>${n}</option>`).join('');
+
+  document.getElementById('manual-sub-list').innerHTML = Array.from({ length: numRows }, (_, i) => `
+    <div class="manual-sub-row">
+      <span class="sp-in" style="font-size:0.8rem;">↑</span>
+      <select class="msub-in" id="msub-in-${i}" onchange="syncSubDropdowns(${i})" style="flex:1;padding:4px 6px;border-radius:6px;border:1.5px solid var(--border);font-size:0.85rem;">
+        ${playerOpts(geplandErin[i] || '', geplandEruit[i] || '')}
+      </select>
+      <span style="color:var(--muted);font-size:0.8rem;">voor</span>
+      <span class="sp-out" style="font-size:0.8rem;">↓</span>
+      <select class="msub-out" id="msub-out-${i}" onchange="syncSubDropdowns(${i})" style="flex:1;padding:4px 6px;border-radius:6px;border:1.5px solid var(--border);font-size:0.85rem;">
+        ${playerOpts(geplandEruit[i] || '', geplandErin[i] || '')}
+      </select>
+    </div>`).join('');
+
+
+  openModal('modal-manual-sub');
+}
+
+function confirmManualSub(recalculate) {
+  const m  = manualSubMatchIdx;
+  const s0 = state.schedule[m * 2];
+
+  // Lees de dropdowns uit
+  const actualSubs = [];
+  let i = 0;
+  while (document.getElementById(`msub-in-${i}`)) {
+    const inVal  = document.getElementById(`msub-in-${i}`).value;
+    const outVal = document.getElementById(`msub-out-${i}`).value;
+    if (inVal && outVal && inVal !== outVal) actualSubs.push({ in: inVal, out: outVal });
+    i++;
+  }
+
+  // Bouw tweede helft slot op basis van eerste helft + daadwerkelijke wissels
+  const newSlot = { bench: [...s0.bench] };
+  POSITIONS.forEach(pos => { newSlot[pos] = s0[pos]; });
+
+  for (const sub of actualSubs) {
+    const pos = POSITIONS.find(p => newSlot[p] === sub.out);
+    if (pos) {
+      newSlot[pos] = sub.in;
+      newSlot.bench = newSlot.bench.filter(n => n !== sub.in);
+      newSlot.bench.push(sub.out);
+    }
+  }
+
+  state.schedule[m * 2 + 1] = newSlot;
+
+  if (recalculate) {
+    herbereken(m + 1);
+  }
+
+  closeModal('modal-manual-sub');
+  saveState();
+
+  // Als we in de wedstrijdmodus zitten voor deze wedstrijd, update het veld live
+  const matchView = document.getElementById('view-match');
+  if (matchView && matchView.classList.contains('active') && state.currentMatch === m) {
+    const s0Current = state.schedule[m * 2];
+    const s1Updated = state.schedule[m * 2 + 1];
+    const currentSlot = state.schedule[m * 2 + state.currentHalf];
+    const subMap = state.currentHalf === 0 ? buildSubMap(s0Current, s1Updated) : {};
+    updateField(currentSlot, [], subMap);
+    renderSubPreview();
+    updateActionBtn();
+  } else {
+    renderSchema();
+  }
+}
+
+function herbereken(vanafMatch) {
+  if (vanafMatch >= state.numMatches) return;
+
+  const field      = state.players.filter(p => !p.isKeeper);
+  const n          = field.length;
+  const benchPerSlot = n - 5;
+
+  // Tel bestaande bankbeurten op t/m de al gespeelde slots
+  const benchCount = {};
+  field.forEach(p => { benchCount[p.name] = 0; });
+  for (let s = 0; s < vanafMatch * 2; s++) {
+    (state.schedule[s].bench || []).forEach(name => { if (benchCount[name] !== undefined) benchCount[name]++; });
+  }
+
+  let prevBench = vanafMatch * 2 > 0
+    ? (state.schedule[vanafMatch * 2 - 1].bench || [])
+    : [];
+
+  const totalSlots = state.numMatches * 2;
+
+  for (let s = vanafMatch * 2; s < totalSlots; s++) {
+    const maxBench   = Math.ceil(((s + 1) * benchPerSlot) / n);
+    const playedSoFar = {};
+    field.forEach(p => { playedSoFar[p.name] = s - benchCount[p.name]; });
+
+    let cands = field.filter(p => benchCount[p.name] < maxBench && !prevBench.includes(p.name));
+    cands.sort((a, b) => {
+      const d = playedSoFar[b.name] - playedSoFar[a.name];
+      return d !== 0 ? d : a.rating - b.rating;
+    });
+
+    let bank = cands.slice(0, benchPerSlot);
+    if (bank.length < benchPerSlot) {
+      const al = bank.map(p => p.name);
+      bank = [...bank, ...field
+        .filter(p => benchCount[p.name] < maxBench && !al.includes(p.name))
+        .sort((a, b) => {
+          const d = playedSoFar[b.name] - playedSoFar[a.name];
+          return d !== 0 ? d : a.rating - b.rating;
+        })
+        .slice(0, benchPerSlot - bank.length)
+      ];
+    }
+
+    bank.forEach(p => { benchCount[p.name]++; });
+    const bankNamen = bank.map(p => p.name);
+    const velders   = field.filter(p => !bankNamen.includes(p.name)).sort((a, b) => b.rating - a.rating);
+
+    if (s % 2 === 1) {
+      // Tweede helft: posities overnemen van eerste helft + wissels doorvoeren
+      const prevSlot  = state.schedule[s - 1];
+      const pf        = POSITIONS.map(pos => prevSlot[pos]);
+      const uitGaand  = pf.filter(n => bankNamen.includes(n));
+      const inKomend  = prevSlot.bench.filter(n => !bankNamen.includes(n));
+      const posMap    = {};
+      POSITIONS.forEach(pos => { if (!bankNamen.includes(prevSlot[pos])) posMap[pos] = prevSlot[pos]; });
+      let idx = 0;
+      POSITIONS.forEach(pos => { if (!posMap[pos] && idx < inKomend.length) posMap[pos] = inKomend[idx++]; });
+      state.schedule[s] = { ...posMap, bench: bankNamen };
+    } else {
+      state.schedule[s] = { ...assignPositions(velders), bench: bankNamen };
+    }
+
+    prevBench = bankNamen;
+  }
+}
+
 function addExtraMatch() {
   const field        = state.players.filter(p => !p.isKeeper);
   const n            = field.length;
@@ -1307,16 +1508,14 @@ function updateActionBtn() {
   const m   = state.currentMatch;
   const h   = state.currentHalf;
   const btn = document.getElementById('action-btn');
+  const subBtn = document.getElementById('manual-sub-btn');
+  subBtn.style.display = '';
   if (h === 0) {
     btn.style.display = 'none';
-  } else if (m < state.numMatches - 1) {
-    btn.style.display = '';
-    btn.textContent = 'Volgende wedstrijd →';
-    btn.className = 'btn btn-blue';
   } else {
     btn.style.display = '';
-    btn.textContent = '🏆 Toernooi afsluiten';
-    btn.className = 'btn btn-red';
+    btn.textContent = m < state.numMatches - 1 ? 'Volgende wedstrijd →' : '🏆 Toernooi afsluiten';
+    btn.className   = m < state.numMatches - 1 ? 'btn btn-blue' : 'btn btn-red';
   }
 }
 
