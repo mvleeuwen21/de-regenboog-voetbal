@@ -259,7 +259,7 @@ input[type="range"]::-webkit-slider-thumb {
 .score-btn:active { background: var(--border); }
 
 /* SVG Veld */
-.field-wrap { position: relative; margin: 0 auto; max-width: 190px; margin-bottom: 8px; }
+.field-wrap { position: relative; margin: 0 auto; max-width: 260px; margin-bottom: 8px; }
 .field-svg  { width: 100%; height: auto; display: block; border-radius: 10px; box-shadow: var(--shadow); }
 
 /* Timer */
@@ -1158,9 +1158,22 @@ function renderSubPreview(highlightOut = [], highlightIn = []) {
     return `<span class="${cls}">${name}</span>`;
   }).join('');
 
+  // Wisselende spelers (alleen eerste helft)
+  let wisselHtml = '';
+  if (h === 0) {
+    const s1    = state.schedule[m * 2 + 1];
+    const eruit = POSITIONS.map(p => slot[p]).filter(n => s1.bench.includes(n));
+    if (eruit.length) {
+      wisselHtml = eruit.map(n => `<span class="sp-chip sp-out">${n}</span>`).join('');
+    }
+  }
+
   document.getElementById('sub-preview').innerHTML = `
     <div class="sub-preview">
-      <div class="sp-row"><span class="sp-label">Bank</span>${benchHtml}</div>
+      <div class="sp-row">
+        <span class="sp-label">Bank</span>${benchHtml}
+        ${wisselHtml ? `<span class="sp-label" style="margin-left:6px;">Wissel</span>${wisselHtml}` : ''}
+      </div>
     </div>`;
 }
 
