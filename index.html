@@ -458,37 +458,37 @@ input[type="range"]::-webkit-slider-thumb {
         <!-- LF -->
         <g id="svg-lf">
           <circle cx="82" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
-          <text x="82" y="87" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
-          <text x="82" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
-          <text x="82" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-lf-sub"></text>
+          <text x="82" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
+          <text x="82" y="101" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
+          <text x="82" y="136" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-lf-sub"></text>
         </g>
         <!-- RF -->
         <g id="svg-rf">
           <circle cx="218" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
-          <text x="218" y="87" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
-          <text x="218" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
-          <text x="218" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-rf-sub"></text>
+          <text x="218" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
+          <text x="218" y="101" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
+          <text x="218" y="136" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-rf-sub"></text>
         </g>
         <!-- CM -->
         <g id="svg-cm">
           <circle cx="150" cy="215" r="28" fill="#6d28d9" stroke="#fff" stroke-width="2.5"/>
-          <text x="150" y="206" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
-          <text x="150" y="216" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
-          <text x="150" y="228" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-cm-sub"></text>
+          <text x="150" y="208" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
+          <text x="150" y="220" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
+          <text x="150" y="255" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-cm-sub"></text>
         </g>
         <!-- LB -->
         <g id="svg-lb">
           <circle cx="82" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
-          <text x="82" y="321" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LA</text>
-          <text x="82" y="331" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
-          <text x="82" y="343" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-lb-sub"></text>
+          <text x="82" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LA</text>
+          <text x="82" y="335" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
+          <text x="82" y="370" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-lb-sub"></text>
         </g>
         <!-- RB -->
         <g id="svg-rb">
           <circle cx="218" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
-          <text x="218" y="321" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RA</text>
-          <text x="218" y="331" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
-          <text x="218" y="343" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-rb-sub"></text>
+          <text x="218" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RA</text>
+          <text x="218" y="335" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
+          <text x="218" y="370" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-rb-sub"></text>
         </g>
         <!-- GK Boaz -->
         <g id="svg-gk">
@@ -1132,7 +1132,7 @@ function updateField(slot, highlightIn = [], subMap = {}) {
     const subEl  = document.getElementById(`svg-${pos}-sub`);
     const circle = document.querySelector(`#svg-${pos} circle`);
     nameEl.textContent = name || '-';
-    nameEl.setAttribute('font-size', name && name.length > 5 ? '9.5' : '11');
+    nameEl.setAttribute('font-size', name && name.length > 5 ? '11' : '13');
     if (subEl) {
       const sub = subMap[pos.toUpperCase()] || '';
       subEl.textContent = sub ? `→ ${sub}` : '';
