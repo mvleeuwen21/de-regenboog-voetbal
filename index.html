@@ -276,20 +276,21 @@ input[type="range"]::-webkit-slider-thumb {
 .timer-btns { display: flex; gap: 8px; margin-top: 10px; }
 .timer-btns .btn { margin-top: 0; }
 
-/* Bank */
-.bench-card {
+/* Wissel-preview panel */
+.sub-preview {
   background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
-  padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+  padding: 10px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
 }
-.bench-title { font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
-.bench-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.bench-chip {
+.sp-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sp-row + .sp-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.sp-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; flex-shrink: 0; }
+.sp-chip {
   background: var(--surface2); border: 1.5px solid var(--border);
-  border-radius: 20px; padding: 6px 14px; font-size: 0.9rem; font-weight: 600;
+  border-radius: 20px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600;
 }
-.bench-chip.sub-out {
-  background: var(--red-bg); border-color: var(--red-bd); color: var(--red);
-}
+.sp-chip.sp-out { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red);   }
+.sp-chip.sp-in  { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+.sp-arrow { color: var(--muted); font-size: 1rem; }
 
 /* Toast */
 .toast {
@@ -503,11 +504,7 @@ input[type="range"]::-webkit-slider-thumb {
       <button class="btn btn-gray btn-sm" onclick="endMatchEarly()" style="margin-top:8px;">■ Wedstrijd beëindigen</button>
     </div>
 
-    <!-- Bank -->
-    <div class="bench-card">
-      <div class="bench-title">Bank</div>
-      <div class="bench-chips" id="bench-chips"><!-- JS --></div>
-    </div>
+    <div id="sub-preview"><!-- JS --></div>
 
     <button class="btn btn-green" id="action-btn" onclick="onActionBtn()">Wissel doorvoeren ↔</button>
     <button class="btn btn-gray btn-sm" onclick="showSchemaView()" style="margin-top:8px;">← Terug naar schema</button>
@@ -1101,7 +1098,7 @@ function renderMatch() {
   document.getElementById('score-them').textContent = sc.them;
 
   updateField(slot);
-  renderBench(slot.bench, []);
+  renderSubPreview();
   updateActionBtn();
   resetTimerUI();
 }
@@ -1124,11 +1121,38 @@ function updateField(slot, highlightIn = []) {
   });
 }
 
-function renderBench(benchNames, highlightOut) {
-  document.getElementById('bench-chips').innerHTML = benchNames.map(name => {
-    const cls = highlightOut.includes(name) ? 'bench-chip sub-out' : 'bench-chip';
-    return `<div class="${cls}">${name}</div>`;
+function renderSubPreview(highlightOut = [], highlightIn = []) {
+  const m    = state.currentMatch;
+  const h    = state.currentHalf;
+  const slot = state.schedule[m * 2 + h];
+
+  // Bankregel
+  const benchHtml = slot.bench.map(name => {
+    const cls = highlightOut.includes(name) ? 'sp-chip sp-out' : 'sp-chip';
+    return `<span class="${cls}">${name}</span>`;
   }).join('');
+
+  // Wisselregel (alleen eerste helft)
+  let subsHtml = '';
+  if (h === 0) {
+    const s1      = state.schedule[m * 2 + 1];
+    const eruit   = POSITIONS.map(p => slot[p]).filter(n => s1.bench.includes(n));
+    const erin    = slot.bench.filter(n => !s1.bench.includes(n));
+    if (eruit.length) {
+      const pairs = eruit.map((out, i) => `
+        <span class="sp-chip sp-in">↑ ${erin[i] || '?'}</span>
+        <span class="sp-arrow">voor</span>
+        <span class="sp-chip sp-out">↓ ${out}</span>
+      `).join('<span style="margin:0 4px;color:var(--border)">·</span>');
+      subsHtml = `<div class="sp-row"><span class="sp-label">Wissel op 5 min</span>${pairs}</div>`;
+    }
+  }
+
+  document.getElementById('sub-preview').innerHTML = `
+    <div class="sub-preview">
+      <div class="sp-row"><span class="sp-label">Bank</span>${benchHtml}</div>
+      ${subsHtml}
+    </div>`;
 }
 
 function updateActionBtn() {
@@ -1195,11 +1219,11 @@ function confirmSub() {
   document.getElementById('timer-half-ind').textContent   = 'Tweede helft (5–10 min)';
 
   updateField(s1, erin);
-  renderBench(s1.bench, eruit);
+  renderSubPreview(eruit, erin);
   updateActionBtn();
   resetTimerUI();
 
-  setTimeout(() => { updateField(s1); renderBench(s1.bench, []); }, 3000);
+  setTimeout(() => { updateField(s1); renderSubPreview(); }, 3000);
 }
 
 function showEndModal() {
