@@ -732,7 +732,30 @@ function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  // Push history zodat de back-knop werkt (niet voor login)
+  if (id !== 'view-login') {
+    history.pushState({ view: id }, '');
+  }
 }
+
+window.addEventListener('popstate', (e) => {
+  const view = e.state && e.state.view;
+  if (!view) return;
+  // Navigeer terug zonder opnieuw te pushen
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(view).classList.add('active');
+  window.scrollTo(0, 0);
+  if (view === 'view-schema') renderSchema();
+  if (view === 'view-setup')  renderSetup();
+  if (view === 'view-match')  renderMatch();
+  // Stop de timer als je weggaat van de wedstrijd
+  // Stop de timer als je weggaat van de wedstrijd
+  if (view !== 'view-match' && typeof timerInterval !== 'undefined') {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    releaseWakeLock();
+  }
+});
 function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
