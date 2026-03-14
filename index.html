@@ -259,7 +259,7 @@ input[type="range"]::-webkit-slider-thumb {
 .score-btn:active { background: var(--border); }
 
 /* SVG Veld */
-.field-wrap { position: relative; margin: 0 auto; max-width: 260px; margin-bottom: 8px; }
+.field-wrap { position: relative; margin: 0 auto; max-width: 300px; margin-bottom: 8px; }
 .field-svg  { width: 100%; height: auto; display: block; border-radius: 10px; box-shadow: var(--shadow); }
 
 /* Timer */
@@ -459,36 +459,36 @@ input[type="range"]::-webkit-slider-thumb {
         <g id="svg-lf">
           <circle cx="82" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
           <text x="82" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
-          <text x="82" y="101" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
-          <text x="82" y="136" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-lf-sub"></text>
+          <text x="82" y="101" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
+          <text x="82" y="136" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="sans-serif" id="svg-lf-sub"></text>
         </g>
         <!-- RF -->
         <g id="svg-rf">
           <circle cx="218" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
           <text x="218" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
-          <text x="218" y="101" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
-          <text x="218" y="136" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-rf-sub"></text>
+          <text x="218" y="101" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
+          <text x="218" y="136" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="sans-serif" id="svg-rf-sub"></text>
         </g>
         <!-- CM -->
         <g id="svg-cm">
           <circle cx="150" cy="215" r="28" fill="#6d28d9" stroke="#fff" stroke-width="2.5"/>
           <text x="150" y="208" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
-          <text x="150" y="220" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
-          <text x="150" y="255" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-cm-sub"></text>
+          <text x="150" y="220" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
+          <text x="150" y="255" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="sans-serif" id="svg-cm-sub"></text>
         </g>
         <!-- LB -->
         <g id="svg-lb">
           <circle cx="82" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
           <text x="82" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LA</text>
-          <text x="82" y="335" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
-          <text x="82" y="370" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-lb-sub"></text>
+          <text x="82" y="335" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
+          <text x="82" y="370" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="sans-serif" id="svg-lb-sub"></text>
         </g>
         <!-- RB -->
         <g id="svg-rb">
           <circle cx="218" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
           <text x="218" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RA</text>
-          <text x="218" y="335" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
-          <text x="218" y="370" text-anchor="middle" fill="#fff" font-size="11" font-weight="600" font-family="sans-serif" id="svg-rb-sub"></text>
+          <text x="218" y="335" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
+          <text x="218" y="370" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="sans-serif" id="svg-rb-sub"></text>
         </g>
         <!-- GK Boaz -->
         <g id="svg-gk">
@@ -988,6 +988,7 @@ function renderSchemaScore(m) {
 }
 
 function showSchemaView() {
+  releaseWakeLock();
   if (state.schedule) renderSchema();
   showView('view-schema');
 }
@@ -1088,6 +1089,7 @@ function startMatch(matchIndex) {
   saveState();
   renderMatch();
   showView('view-match');
+  requestWakeLock();
 }
 
 function renderMatch() {
@@ -1132,7 +1134,7 @@ function updateField(slot, highlightIn = [], subMap = {}) {
     const subEl  = document.getElementById(`svg-${pos}-sub`);
     const circle = document.querySelector(`#svg-${pos} circle`);
     nameEl.textContent = name || '-';
-    nameEl.setAttribute('font-size', name && name.length > 5 ? '11' : '13');
+    nameEl.setAttribute('font-size', name && name.length > 5 ? '12' : '14');
     if (subEl) {
       const sub = subMap[pos.toUpperCase()] || '';
       subEl.textContent = sub ? `→ ${sub}` : '';
@@ -1323,6 +1325,30 @@ function toggleTimer() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// WAKE LOCK (scherm aan houden in wedstrijd-modus)
+// ═══════════════════════════════════════════════════════════════
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch (_) {}
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+// Heractiveer wake lock als het tabblad weer zichtbaar wordt
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const matchActive = document.getElementById('view-match').classList.contains('active');
+    if (matchActive) requestWakeLock();
+  }
+});
+
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
@@ -1339,6 +1365,7 @@ document.addEventListener('fullscreenchange', () => {
 function endMatchEarly() {
   clearInterval(timerInterval);
   timerRunning = false;
+  releaseWakeLock();
   showSchemaView();
 }
 
