@@ -616,8 +616,24 @@ function saveState() {
   try { localStorage.setItem('svt3_state', JSON.stringify(state)); } catch (_) {}
   // Naar server sturen (debounced)
   clearTimeout(apiSaveTimer);
-  apiSaveTimer = setTimeout(() => apiSaveData(state), 1500);
+  apiSaveTimer = setTimeout(() => { apiSaveData(state); apiSaveTimer = null; }, 1500);
 }
+
+// Bij wegnavigeren / app naar achtergrond: meteen opslaan naar server
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && apiSaveTimer) {
+    clearTimeout(apiSaveTimer);
+    apiSaveTimer = null;
+    apiSaveData(state);
+  }
+});
+window.addEventListener('beforeunload', () => {
+  if (apiSaveTimer) {
+    clearTimeout(apiSaveTimer);
+    apiSaveTimer = null;
+    apiSaveData(state);
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════
 // API
