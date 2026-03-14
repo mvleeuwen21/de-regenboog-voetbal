@@ -142,7 +142,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ── BUTTONS ─────────────────────────────────────────── */
 .btn {
-  display: block; width: 100%; padding: 14px; border: none;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 14px; border: none;
   border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
   margin-top: 10px; transition: filter 0.15s; text-align: center;
 }
@@ -234,11 +235,11 @@ input[type="range"]::-webkit-slider-thumb {
 /* ── MATCH VIEW ──────────────────────────────────────── */
 .match-topbar {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 12px; gap: 8px;
+  margin-bottom: 8px; gap: 8px;
 }
-.match-topbar-left h2 { font-size: 1rem; font-weight: 800; line-height: 1.3; }
-.match-opponent { font-size: 0.82rem; color: var(--green); font-weight: 700; margin-top: 2px; }
-.match-meta-line { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.match-topbar-left h2 { font-size: 0.95rem; font-weight: 800; line-height: 1.2; }
+.match-opponent { font-size: 0.78rem; color: var(--green); font-weight: 700; margin-top: 1px; }
+.match-meta-line { font-size: 0.74rem; color: var(--muted); margin-top: 1px; }
 
 .score-box {
   background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
@@ -258,35 +259,35 @@ input[type="range"]::-webkit-slider-thumb {
 .score-btn:active { background: var(--border); }
 
 /* SVG Veld */
-.field-wrap { position: relative; margin: 0 auto; max-width: 220px; margin-bottom: 10px; }
+.field-wrap { position: relative; margin: 0 auto; max-width: 190px; margin-bottom: 8px; }
 .field-svg  { width: 100%; height: auto; display: block; border-radius: 10px; box-shadow: var(--shadow); }
 
 /* Timer */
 .timer-card {
   background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px;
-  padding: 10px 16px; margin-bottom: 8px; text-align: center; box-shadow: var(--shadow);
+  padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow);
 }
+.timer-row { display: flex; align-items: center; gap: 8px; }
 .timer-digits {
-  font-size: 2.4rem; font-weight: 800; font-variant-numeric: tabular-nums;
-  letter-spacing: 2px; line-height: 1; color: var(--text); transition: color 0.3s;
+  font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  letter-spacing: 1px; line-height: 1; color: var(--text); transition: color 0.3s;
+  min-width: 68px; flex-shrink: 0;
 }
 .timer-digits.t-warn   { color: var(--yellow); }
 .timer-digits.t-danger { color: var(--red); }
-.timer-half-ind { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-.timer-btns { display: flex; gap: 8px; margin-top: 10px; }
-.timer-btns .btn { margin-top: 0; }
+.timer-half-ind { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
 
 /* Wissel-preview panel */
 .sub-preview {
   background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
-  padding: 10px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+  padding: 8px 12px; margin-bottom: 8px; box-shadow: var(--shadow);
 }
-.sp-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sp-row { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
 .sp-row + .sp-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
 .sp-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; flex-shrink: 0; }
 .sp-chip {
   background: var(--surface2); border: 1.5px solid var(--border);
-  border-radius: 20px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600;
+  border-radius: 20px; padding: 3px 8px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
 }
 .sp-chip.sp-out { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red);   }
 .sp-chip.sp-in  { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
@@ -457,32 +458,37 @@ input[type="range"]::-webkit-slider-thumb {
         <!-- LF -->
         <g id="svg-lf">
           <circle cx="82" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
-          <text x="82" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
-          <text x="82" y="101" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
+          <text x="82" y="87" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LV</text>
+          <text x="82" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lf-name">-</text>
+          <text x="82" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-lf-sub"></text>
         </g>
         <!-- RF -->
         <g id="svg-rf">
           <circle cx="218" cy="96" r="28" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
-          <text x="218" y="89" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
-          <text x="218" y="101" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
+          <text x="218" y="87" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RV</text>
+          <text x="218" y="97" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rf-name">-</text>
+          <text x="218" y="109" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-rf-sub"></text>
         </g>
         <!-- CM -->
         <g id="svg-cm">
           <circle cx="150" cy="215" r="28" fill="#6d28d9" stroke="#fff" stroke-width="2.5"/>
-          <text x="150" y="208" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
-          <text x="150" y="220" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
+          <text x="150" y="206" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">MID</text>
+          <text x="150" y="216" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-cm-name">-</text>
+          <text x="150" y="228" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-cm-sub"></text>
         </g>
         <!-- LB -->
         <g id="svg-lb">
           <circle cx="82" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
-          <text x="82" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LA</text>
-          <text x="82" y="335" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
+          <text x="82" y="321" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">LA</text>
+          <text x="82" y="331" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-lb-name">-</text>
+          <text x="82" y="343" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-lb-sub"></text>
         </g>
         <!-- RB -->
         <g id="svg-rb">
           <circle cx="218" cy="330" r="28" fill="#166534" stroke="#fff" stroke-width="2.5"/>
-          <text x="218" y="323" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RA</text>
-          <text x="218" y="335" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
+          <text x="218" y="321" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="8.5" font-family="sans-serif">RA</text>
+          <text x="218" y="331" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif" id="svg-rb-name">-</text>
+          <text x="218" y="343" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="8" font-family="sans-serif" id="svg-rb-sub"></text>
         </g>
         <!-- GK Boaz -->
         <g id="svg-gk">
@@ -495,19 +501,20 @@ input[type="range"]::-webkit-slider-thumb {
 
     <!-- Timer -->
     <div class="timer-card">
-      <div class="timer-digits" id="timer-digits">10:00</div>
-      <div class="timer-half-ind" id="timer-half-ind">Eerste helft · wissel op 5:00</div>
-      <div class="timer-btns">
-        <button class="btn btn-blue" id="timer-toggle-btn" onclick="toggleTimer()" style="margin:0;flex:1;">▶ Start</button>
-        <button class="btn btn-gray" onclick="resetTimerUI()" style="margin:0;width:auto;padding:14px 16px;">↺</button>
+      <div class="timer-row">
+        <div class="timer-digits" id="timer-digits">10:00</div>
+        <button class="btn btn-blue" id="timer-toggle-btn" onclick="toggleTimer()" style="margin:0;flex:2;height:44px;font-size:1.1rem;">▶</button>
+        <button class="btn btn-gray" onclick="resetTimerUI()" style="margin:0;flex:1;height:44px;font-size:0.9rem;">↺</button>
+        <button class="btn btn-gray" onclick="endMatchEarly()" style="margin:0;flex:1;height:44px;font-size:0.9rem;" title="Wedstrijd beëindigen">■</button>
+        <button class="btn btn-gray" onclick="toggleFullscreen()" id="fs-btn" style="margin:0;flex:1;height:44px;font-size:0.9rem;" title="Volledig scherm">⛶</button>
       </div>
-      <button class="btn btn-gray btn-sm" onclick="endMatchEarly()" style="margin-top:8px;">■ Wedstrijd beëindigen</button>
+      <div class="timer-half-ind" id="timer-half-ind">Eerste helft · wissel op 5:00</div>
     </div>
 
     <div id="sub-preview"><!-- JS --></div>
 
-    <button class="btn btn-green" id="action-btn" onclick="onActionBtn()">Wissel doorvoeren ↔</button>
-    <button class="btn btn-gray btn-sm" onclick="showSchemaView()" style="margin-top:8px;">← Terug naar schema</button>
+    <button class="btn btn-blue" id="action-btn" onclick="onActionBtn()" style="display:none;">Volgende wedstrijd →</button>
+    <button class="btn btn-gray btn-sm" onclick="showSchemaView()" style="margin-top:6px;">← Terug naar schema</button>
   </div>
 
 </div><!-- /.app -->
@@ -1098,20 +1105,38 @@ function renderMatch() {
   document.getElementById('score-ours').textContent = sc.ours;
   document.getElementById('score-them').textContent = sc.them;
 
-  updateField(slot);
+  const subMap = h === 0 ? buildSubMap(slot, state.schedule[m * 2 + 1]) : {};
+  updateField(slot, [], subMap);
   renderSubPreview();
   updateActionBtn();
   resetTimerUI();
 }
 
-function updateField(slot, highlightIn = []) {
+function buildSubMap(s0, s1) {
+  if (!s1) return {};
+  const eruit = POSITIONS.map(p => s0[p]).filter(n => s1.bench.includes(n));
+  const erin  = s0.bench.filter(n => !s1.bench.includes(n));
+  const map   = {};
+  eruit.forEach((out, i) => {
+    const pos = POSITIONS.find(p => s0[p] === out);
+    if (pos) map[pos] = erin[i] || '';
+  });
+  return map;
+}
+
+function updateField(slot, highlightIn = [], subMap = {}) {
   const defStroke = { lf:'#fff', rf:'#fff', cm:'#fff', lb:'#fff', rb:'#fff' };
   ['lf','rf','cm','lb','rb'].forEach(pos => {
     const name   = slot[pos.toUpperCase()];
     const nameEl = document.getElementById(`svg-${pos}-name`);
+    const subEl  = document.getElementById(`svg-${pos}-sub`);
     const circle = document.querySelector(`#svg-${pos} circle`);
     nameEl.textContent = name || '-';
     nameEl.setAttribute('font-size', name && name.length > 5 ? '9.5' : '11');
+    if (subEl) {
+      const sub = subMap[pos.toUpperCase()] || '';
+      subEl.textContent = sub ? `→ ${sub}` : '';
+    }
     if (highlightIn.includes(name)) {
       circle.setAttribute('stroke', '#facc15');
       circle.setAttribute('stroke-width', '4');
@@ -1133,26 +1158,9 @@ function renderSubPreview(highlightOut = [], highlightIn = []) {
     return `<span class="${cls}">${name}</span>`;
   }).join('');
 
-  // Wisselregel (alleen eerste helft)
-  let subsHtml = '';
-  if (h === 0) {
-    const s1      = state.schedule[m * 2 + 1];
-    const eruit   = POSITIONS.map(p => slot[p]).filter(n => s1.bench.includes(n));
-    const erin    = slot.bench.filter(n => !s1.bench.includes(n));
-    if (eruit.length) {
-      const pairs = eruit.map((out, i) => `
-        <span class="sp-chip sp-in">↑ ${erin[i] || '?'}</span>
-        <span class="sp-arrow">voor</span>
-        <span class="sp-chip sp-out">↓ ${out}</span>
-      `).join('<span style="margin:0 4px;color:var(--border)">·</span>');
-      subsHtml = `<div class="sp-row"><span class="sp-label">Wissel op 5 min</span>${pairs}</div>`;
-    }
-  }
-
   document.getElementById('sub-preview').innerHTML = `
     <div class="sub-preview">
       <div class="sp-row"><span class="sp-label">Bank</span>${benchHtml}</div>
-      ${subsHtml}
     </div>`;
 }
 
@@ -1161,12 +1169,13 @@ function updateActionBtn() {
   const h   = state.currentHalf;
   const btn = document.getElementById('action-btn');
   if (h === 0) {
-    btn.textContent = 'Wissel doorvoeren ↔';
-    btn.className = 'btn btn-green';
+    btn.style.display = 'none';
   } else if (m < state.numMatches - 1) {
+    btn.style.display = '';
     btn.textContent = 'Volgende wedstrijd →';
     btn.className = 'btn btn-blue';
   } else {
+    btn.style.display = '';
     btn.textContent = '🏆 Toernooi afsluiten';
     btn.className = 'btn btn-red';
   }
@@ -1174,10 +1183,7 @@ function updateActionBtn() {
 
 function onActionBtn() {
   const m = state.currentMatch;
-  const h = state.currentHalf;
-  if (h === 0) {
-    showSubModal();
-  } else if (m < state.numMatches - 1) {
+  if (m < state.numMatches - 1) {
     state.currentMatch++;
     state.currentHalf = 0;
     saveState();
@@ -1275,30 +1281,27 @@ function toggleTimer() {
   if (timerRunning) {
     clearInterval(timerInterval);
     timerRunning = false;
-    document.getElementById('timer-toggle-btn').textContent = '▶ Hervat';
+    document.getElementById('timer-toggle-btn').textContent = '▶';
   } else {
     timerRunning = true;
-    document.getElementById('timer-toggle-btn').textContent = '⏸ Pauze';
+    document.getElementById('timer-toggle-btn').textContent = '⏸';
     timerInterval = setInterval(() => {
       timerSec--;
       refreshTimerDisplay();
 
-      // Op precies 5:00 → wissel-alert
+      // Op precies 5:00 → automatisch wisselen
       if (timerSec === 5 * 60 && state.currentHalf === 0 && !subAlertShown) {
         subAlertShown = true;
-        clearInterval(timerInterval);
-        timerRunning = false;
-        document.getElementById('timer-toggle-btn').textContent = '▶ Hervat';
         if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-        showToast('⏱ 5 minuten – tijd voor wissels!', 4000);
-        showSubModal();
+        showToast('⏱ Wissels doorvoeren!', 3000);
+        confirmSub();
       }
 
       if (timerSec <= 0) {
         clearInterval(timerInterval);
         timerRunning = false;
         timerSec = 0;
-        document.getElementById('timer-toggle-btn').textContent = '▶ Start';
+        document.getElementById('timer-toggle-btn').textContent = '▶';
         refreshTimerDisplay();
         if (navigator.vibrate) navigator.vibrate([500, 100, 500, 100, 500]);
         showToast('⏱ Wedstrijd afgelopen!', 4000);
@@ -1306,6 +1309,19 @@ function toggleTimer() {
     }, 1000);
   }
 }
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fs-btn');
+  if (btn) btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+});
 
 function endMatchEarly() {
   clearInterval(timerInterval);
@@ -1318,7 +1334,7 @@ function resetTimerUI() {
   timerRunning = false;
   timerSec = 10 * 60;
   subAlertShown = false;
-  document.getElementById('timer-toggle-btn').textContent = '▶ Start';
+  document.getElementById('timer-toggle-btn').textContent = '▶';
   document.getElementById('timer-half-ind').textContent =
     state.currentHalf === 0 ? 'Eerste helft · wissel op 5:00' : 'Tweede helft (5–10 min)';
   refreshTimerDisplay();
