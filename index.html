@@ -227,6 +227,12 @@ input[type="range"]::-webkit-slider-thumb {
   background: #fff; border-radius: 10px; padding: 4px 10px;
   font-size: 0.78rem; font-weight: 700; white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0,0,0,0.07);
+  cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+  user-select: none;
+}
+.mini-chip.chip-selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--blue);
+  transform: scale(1.1);
 }
 .mc-fwd { border-bottom: 2px solid #dc2626; color: #991b1b; }
 .mc-mid { border-bottom: 2px solid #7c3aed; color: #6d28d9; }
@@ -235,7 +241,8 @@ input[type="range"]::-webkit-slider-thumb {
 
 .bank-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bank-label { font-size: 0.72rem; color: var(--muted); }
-.bank-chip { background: var(--surface2); border-radius: 6px; padding: 2px 8px; font-size: 0.78rem; color: var(--muted); border: 1px solid var(--border); }
+.bank-chip { background: var(--surface2); border-radius: 6px; padding: 2px 8px; font-size: 0.78rem; color: var(--muted); border: 1px solid var(--border); cursor: pointer; user-select: none; transition: transform 0.1s; }
+.bank-chip.chip-selected { border-color: var(--blue); color: var(--blue); transform: scale(1.08); box-shadow: 0 0 0 2px var(--blue); }
 
 .sub-hint { font-size: 0.75rem; color: var(--muted); margin-top: 6px; }
 .sub-hint span.in  { color: var(--green); font-weight: 700; }
@@ -631,7 +638,8 @@ function loadStateLocal() {
   catch { return null; }
 }
 
-let apiSaveTimer = null;
+let apiSaveTimer  = null;
+let selectedChip  = null; // { slot, pos, name }
 
 function saveState() {
   state.savedAt = Date.now();
@@ -1027,6 +1035,36 @@ function generateSchedule() {
 // ═══════════════════════════════════════════════════════════════
 // SCHEMA VIEW
 // ═══════════════════════════════════════════════════════════════
+function selectChip(slotIdx, pos, name, el) {
+  // Deselect als dezelfde chip nogmaals wordt aangeklikt
+  if (selectedChip && selectedChip.slot === slotIdx && selectedChip.pos === pos) {
+    selectedChip = null;
+    renderSchema();
+    return;
+  }
+  // Wissel als er al een chip geselecteerd is in hetzelfde slot
+  if (selectedChip && selectedChip.slot === slotIdx) {
+    swapInSlot(state.schedule[slotIdx], selectedChip.pos, pos);
+    selectedChip = null;
+    saveState();
+    renderSchema();
+    return;
+  }
+  // Selecteer deze chip (andere slot of geen selectie)
+  selectedChip = { slot: slotIdx, pos, name };
+  renderSchema();
+}
+
+function swapInSlot(slot, pos1, pos2) {
+  const isField = p => POSITIONS.includes(p);
+  const benchIdx = p => +p.split('-')[1];
+  const get = p => isField(p) ? slot[p] : slot.bench[benchIdx(p)];
+  const set = (p, v) => { if (isField(p)) slot[p] = v; else slot.bench[benchIdx(p)] = v; };
+  const a = get(pos1), b = get(pos2);
+  set(pos1, b);
+  set(pos2, a);
+}
+
 function renderSchema() {
 
   const content = document.getElementById('schema-content');
@@ -1074,23 +1112,30 @@ function renderSchema() {
 
       const half = document.createElement('div');
       half.className = 'half-section';
+      const chip = (pos, cls, label) =>
+        `<div class="mini-chip ${cls}${selectedChip && selectedChip.slot===slotIdx && selectedChip.pos===pos ? ' chip-selected' : ''}"
+          onclick="selectChip(${slotIdx},'${pos}','${slot[pos]}',this)"
+          data-slot="${slotIdx}" data-pos="${pos}">${label || slot[pos]}</div>`;
+
       half.innerHTML = `
         <div class="half-label">${halfName}</div>
         <div class="formation-mini">
           <div class="formation-row">
-            <div class="mini-chip mc-fwd">${slot.LF}</div>
-            <div class="mini-chip mc-fwd">${slot.RF}</div>
+            ${chip('LF','mc-fwd')}
+            ${chip('RF','mc-fwd')}
           </div>
-          <div class="formation-row"><div class="mini-chip mc-mid">${slot.CM}</div></div>
+          <div class="formation-row">${chip('CM','mc-mid')}</div>
           <div class="formation-row">
-            <div class="mini-chip mc-def">${slot.LB}</div>
-            <div class="mini-chip mc-def">${slot.RB}</div>
+            ${chip('LB','mc-def')}
+            ${chip('RB','mc-def')}
           </div>
           <div class="formation-row"><div class="mini-chip mc-gk">Boaz 🧤</div></div>
         </div>
         <div class="bank-row">
           <span class="bank-label">Bank:</span>
-          ${slot.bench.map(n => `<span class="bank-chip">${n}</span>`).join('')}
+          ${slot.bench.map((n, i) => `<span class="bank-chip${selectedChip && selectedChip.slot===slotIdx && selectedChip.pos==='bench-'+i ? ' chip-selected' : ''}"
+            onclick="selectChip(${slotIdx},'bench-${i}','${n}',this)"
+            data-slot="${slotIdx}" data-pos="bench-${i}">${n}</span>`).join('')}
         </div>
         ${subHint}`;
       block.appendChild(half);
